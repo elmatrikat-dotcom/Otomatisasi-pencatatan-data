@@ -298,7 +298,6 @@ function renderIdentitas(identity) {
       <td class="label-cell">Debit Izin Masyarakat</td>
       <td class="split-cell"><div><span><strong>Harian:</strong> ${v('debitMasyarakatHarian')} m³</span><span><strong>Bulanan:</strong> ${v('debitMasyarakatBulanan')} m³</span></div></td>
     </tr>
-    <tr><td class="label-cell">Keterangan Sumur</td><td>${v('keteranganSumur')}</td></tr>
   </table>`;
 
   document.getElementById('editIdentitasForm').classList.add('hidden');
@@ -309,7 +308,6 @@ function buildMonthBlock(monthlySlice) {
   const th = monthlySlice.map(m => `<th>${m.bulan}</th>`).join('');
   const angkaRow = monthlySlice.map(m => `<td>${m.wmAkhir || '-'}</td>`).join('');
   const volumeRow = monthlySlice.map(m => `<td>${(m.volume !== '' && m.volume !== undefined) ? m.volume : '-'}</td>`).join('');
-  const fotoRow = monthlySlice.map(m => `<td>${m.foto ? `<a class="link-foto" href="${m.foto}" target="_blank">Lihat</a>` : '-'}</td>`).join('');
   const aksiRow = monthlySlice.map(m => `<td>${m.wmAkhir ? `<button class="btn-danger aksi-btn" onclick="hapusBulan('${m.bulan}')">Hapus</button>` : '-'}</td>`).join('');
 
   return `
@@ -317,7 +315,6 @@ function buildMonthBlock(monthlySlice) {
     <tr><th class="row-label">Bulan</th>${th}</tr>
     <tr><td class="row-label">Angka Meter Air</td>${angkaRow}</tr>
     <tr><td class="row-label">Volume Pemakaian (m³)</td>${volumeRow}</tr>
-    <tr><td class="row-label">Foto</td>${fotoRow}</tr>
     <tr><td class="row-label">Aksi</td>${aksiRow}</tr>
   </table>`;
 }
