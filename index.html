@@ -148,6 +148,7 @@
   <button class="btn-primary" id="btnEditIdentitas">✏️ Edit Identitas</button>
   <button class="btn-primary" id="btnExportPdf">🖨️ Export PDF Kartu Ini</button>
   <button class="btn-danger" id="btnHapusPerusahaan">🗑️ Hapus Perusahaan Ini</button>
+  <div id="pdfLinkArea"></div>
 
   <div id="editIdentitasForm" class="hidden"></div>
 </div>
@@ -265,6 +266,8 @@ function checkboxRow(value, optionA, optionB) {
 
 function renderIdentitas(identity) {
   const view = document.getElementById('viewIdentitas');
+  const pdfArea = document.getElementById('pdfLinkArea');
+  if (pdfArea) pdfArea.innerHTML = '';
   const v = key => escapeHtml(identity[key] || '-');
 
   view.innerHTML = `
@@ -373,13 +376,15 @@ document.getElementById('btnEditIdentitas').addEventListener('click', function (
 });
 
 document.getElementById('btnExportPdf').addEventListener('click', function () {
-  setStatus('Membuat PDF, tunggu sebentar...');
+  document.getElementById('pdfLinkArea').innerHTML = '';
+  setStatus('Membuat PDF, tunggu sebentar (bisa 5-15 detik)...');
   fetch(WEB_APP_URL, { method: 'POST', body: JSON.stringify({ action: 'exportSinglePDF', nama: currentNama }) })
     .then(res => res.json())
     .then(data => {
       if (data.success) {
-        setStatus('✅ PDF siap.');
-        window.open(data.result.url, '_blank');
+        setStatus('✅ PDF berhasil dibuat.');
+        document.getElementById('pdfLinkArea').innerHTML =
+          `<div style="margin-top:8px;"><a href="${data.result.url}" target="_blank" style="font-weight:700; color:#1a73e8;">📄 Buka / Download PDF Hasil Export</a></div>`;
       } else {
         setStatus('Gagal export: ' + data.error);
       }
