@@ -26,6 +26,25 @@
   .link-foto { font-size:12px; }
   .aksi-btn { padding:4px 8px; font-size:12px; margin:2px; }
   #preview { max-width:100%; margin-top:8px; border-radius:6px; display:none; }
+
+  /* ===== Gaya kartu formulir (mirip kertas fisik) ===== */
+  .form-table { width:100%; border-collapse:collapse; font-size:13px; margin-top:8px; }
+  .form-table td { border:1px solid #333; padding:7px 9px; vertical-align:top; }
+  .form-table .label-cell { background:#eef1f6; font-weight:700; width:34%; font-size:12px; text-transform:uppercase; letter-spacing:0.3px; }
+  .form-table .split-cell { padding:0; }
+  .form-table .split-cell > div { display:flex; }
+  .form-table .split-cell > div > span { flex:1; padding:7px 9px; border-right:1px solid #333; }
+  .form-table .split-cell > div > span:last-child { border-right:none; }
+  .checkbox-group span { display:inline-block; margin-right:16px; }
+  .checkbox-group .box { display:inline-block; width:14px; height:14px; border:1.5px solid #333; margin-right:4px; text-align:center; line-height:12px; font-size:11px; vertical-align:middle; }
+  .checkbox-group .checked .box { background:#1a73e8; color:#fff; font-weight:700; }
+  .checkbox-group .checked { font-weight:700; }
+
+  .month-table { width:100%; border-collapse:collapse; font-size:12px; margin-top:10px; table-layout:fixed; }
+  .month-table th, .month-table td { border:1px solid #333; padding:6px 4px; text-align:center; word-break:break-word; }
+  .month-table th { background:#dbe5f5; text-transform:uppercase; font-size:11px; }
+  .month-table .row-label { background:#eef1f6; font-weight:700; text-align:left; text-transform:uppercase; font-size:11px; width:120px; }
+  .month-table td.keterangan-cell { font-size:11px; text-align:left; }
 </style>
 </head>
 <body>
@@ -132,17 +151,10 @@
   <div id="editIdentitasForm" class="hidden"></div>
 </div>
 
-<!-- ==================== TABEL 12 BULAN ==================== -->
+<!-- ==================== TABEL 12 BULAN (gaya kertas MATRIKS) ==================== -->
 <div id="tabelBulanan" class="card hidden">
-  <h3>Histori Bacaan Meteran (12 Bulan)</h3>
-  <div style="overflow-x:auto;">
-    <table id="tabelHistori">
-      <thead>
-        <tr><th>Bulan</th><th>WM Awal</th><th>WM Akhir</th><th>Volume</th><th>Keterangan</th><th>Foto</th><th>Aksi</th></tr>
-      </thead>
-      <tbody id="tbodyHistori"></tbody>
-    </table>
-  </div>
+  <h3>Histori Bacaan Meteran (Tahun Berjalan)</h3>
+  <div id="tabelHistoriWrap" style="overflow-x:auto;"></div>
 </div>
 
 <!-- ==================== FORM INPUT BULAN INI ==================== -->
@@ -241,30 +253,80 @@ function loadCompanyDetail(nama) {
     .catch(err => setStatus('Error: ' + err.message));
 }
 
+function checkboxRow(value, optionA, optionB) {
+  const isA = value === optionA;
+  const isB = value === optionB;
+  return `<div class="checkbox-group">
+    <span class="${isA ? 'checked' : ''}"><span class="box">${isA ? '✓' : ''}</span>${optionA}</span>
+    <span class="${isB ? 'checked' : ''}"><span class="box">${isB ? '✓' : ''}</span>${optionB}</span>
+  </div>`;
+}
+
 function renderIdentitas(identity) {
   const view = document.getElementById('viewIdentitas');
-  view.innerHTML = Object.keys(IDENTITY_LABELS).map(key =>
-    `<div><strong>${IDENTITY_LABELS[key]}:</strong> ${escapeHtml(identity[key] || '-')}</div>`
-  ).join('');
+  const v = key => escapeHtml(identity[key] || '-');
+
+  view.innerHTML = `
+  <table class="form-table">
+    <tr><td class="label-cell">Nama Perusahaan</td><td>${v('nama')}</td></tr>
+    <tr><td class="label-cell">Alamat Perusahaan/Kantor</td><td>${v('alamatKantor')}</td></tr>
+    <tr><td class="label-cell">Lokasi Sumur</td><td>${v('lokasiSumur')}</td></tr>
+    <tr>
+      <td class="label-cell">Koordinat</td>
+      <td class="split-cell"><div><span><strong>X:</strong> ${v('koordinatX')}</span><span><strong>Y:</strong> ${v('koordinatY')}</span></div></td>
+    </tr>
+    <tr><td class="label-cell">Status Izin</td><td>${checkboxRow(identity.statusIzin, 'Izin', 'Non Izin')}</td></tr>
+    <tr><td class="label-cell">Jenis Pengambilan</td><td>${checkboxRow(identity.jenisSumur, 'Sumur Bor', 'Sumur Gali/Pantek/Pasak')}</td></tr>
+    <tr><td class="label-cell">Watermeter</td><td>${checkboxRow(identity.meteran, 'WM', 'Non WM')}</td></tr>
+    <tr><td class="label-cell">Status Bangun Sumur</td><td>${checkboxRow(identity.statusBangunSumur, 'Sudah Membangun Sumur', 'Belum/Proses Membangun Sumur')}</td></tr>
+    <tr><td class="label-cell">Kedalaman Sumur</td><td>${v('kedalamanSumur')}</td></tr>
+    <tr><td class="label-cell">No Izin SIPA</td><td>${v('noIzinSipa')}</td></tr>
+    <tr>
+      <td class="label-cell">Tgl Izin / Berlaku</td>
+      <td class="split-cell"><div><span>${v('tglIzin')}</span><span>${v('berlaku')}</span></div></td>
+    </tr>
+    <tr><td class="label-cell">Tgl Akhir Izin</td><td>${v('tglAkhirIzin')}</td></tr>
+    <tr><td class="label-cell">No Registrasi Sumur</td><td>${v('noRegistrasiSumur')}</td></tr>
+    <tr><td class="label-cell">Kategori Izin</td><td>${v('kategoriIzin')}</td></tr>
+    <tr>
+      <td class="label-cell">Debit Izin Pemrakarsa</td>
+      <td class="split-cell"><div><span><strong>Harian:</strong> ${v('debitPemrakarsaHarian')} m³</span><span><strong>Bulanan:</strong> ${v('debitPemrakarsaBulanan')} m³</span></div></td>
+    </tr>
+    <tr>
+      <td class="label-cell">Debit Izin Masyarakat</td>
+      <td class="split-cell"><div><span><strong>Harian:</strong> ${v('debitMasyarakatHarian')} m³</span><span><strong>Bulanan:</strong> ${v('debitMasyarakatBulanan')} m³</span></div></td>
+    </tr>
+    <tr><td class="label-cell">Keterangan Sumur</td><td>${v('keteranganSumur')}</td></tr>
+  </table>`;
+
   document.getElementById('editIdentitasForm').classList.add('hidden');
   document.getElementById('editIdentitasForm').innerHTML = '';
 }
 
+function buildMonthBlock(monthlySlice) {
+  const th = monthlySlice.map(m => `<th>${m.bulan}</th>`).join('');
+  const angkaRow = monthlySlice.map(m => `<td>${m.wmAkhir || '-'}</td>`).join('');
+  const volumeRow = monthlySlice.map(m => `<td>${(m.volume !== '' && m.volume !== undefined) ? m.volume : '-'}</td>`).join('');
+  const ketRow = monthlySlice.map(m => `<td class="keterangan-cell">${escapeHtml(m.keterangan || '-')}</td>`).join('');
+  const fotoRow = monthlySlice.map(m => `<td>${m.foto ? `<a class="link-foto" href="${m.foto}" target="_blank">Lihat</a>` : '-'}</td>`).join('');
+  const aksiRow = monthlySlice.map(m => `<td>${m.wmAkhir ? `<button class="btn-danger aksi-btn" onclick="hapusBulan('${m.bulan}')">Hapus</button>` : '-'}</td>`).join('');
+
+  return `
+  <table class="month-table">
+    <tr><th class="row-label">Bulan</th>${th}</tr>
+    <tr><td class="row-label">Angka Meter Air</td>${angkaRow}</tr>
+    <tr><td class="row-label">Volume Pemakaian (m³)</td>${volumeRow}</tr>
+    <tr><td class="row-label">Keterangan</td>${ketRow}</tr>
+    <tr><td class="row-label">Foto</td>${fotoRow}</tr>
+    <tr><td class="row-label">Aksi</td>${aksiRow}</tr>
+  </table>`;
+}
+
 function renderHistori(monthly) {
-  const tbody = document.getElementById('tbodyHistori');
-  tbody.innerHTML = monthly.map(m => `
-    <tr>
-      <td>${m.bulan}</td>
-      <td>${m.wmAwal || ''}</td>
-      <td>${m.wmAkhir || ''}</td>
-      <td>${m.volume !== '' && m.volume !== undefined ? m.volume : ''}</td>
-      <td>${escapeHtml(m.keterangan || '')}</td>
-      <td>${m.foto ? `<a class="link-foto" href="${m.foto}" target="_blank">Lihat</a>` : '-'}</td>
-      <td>
-        ${m.wmAkhir ? `<button class="btn-danger aksi-btn" onclick="hapusBulan('${m.bulan}')">Hapus</button>` : ''}
-      </td>
-    </tr>
-  `).join('');
+  const wrap = document.getElementById('tabelHistoriWrap');
+  const firstHalf = monthly.slice(0, 6);   // Januari - Juni
+  const secondHalf = monthly.slice(6, 12); // Juli - Desember
+  wrap.innerHTML = buildMonthBlock(firstHalf) + buildMonthBlock(secondHalf);
 }
 
 function hapusBulan(bulan) {
