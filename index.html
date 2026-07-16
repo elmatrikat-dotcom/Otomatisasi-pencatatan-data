@@ -8,14 +8,11 @@
   body { font-family: sans-serif; max-width: 480px; margin: 0 auto; padding: 16px; background:#f5f5f5; }
   h2 { text-align:center; }
   label { display:block; margin-top:12px; font-weight:600; }
-  input, textarea { width:100%; padding:8px; margin-top:4px; box-sizing:border-box; font-size:15px; }
+  input, textarea, select { width:100%; padding:8px; margin-top:4px; box-sizing:border-box; font-size:15px; }
   button { margin-top:16px; width:100%; padding:12px; font-size:16px; border:none; border-radius:6px; cursor:pointer; }
-  #btnOcr { background:#1a73e8; color:#fff; }
   #btnSave { background:#188038; color:#fff; }
   #preview { max-width:100%; margin-top:10px; border-radius:6px; display:none; }
   #status { margin-top:10px; font-size:14px; color:#555; min-height:20px; }
-  .hidden { display:none; }
-  .warn { background:#fff3cd; border:1px solid #ffe69c; padding:8px; border-radius:6px; font-size:13px; margin-top:8px; }
 </style>
 </head>
 <body>
@@ -31,29 +28,22 @@
 <input type="file" id="foto" accept="image/*" capture="environment">
 <img id="preview" alt="preview foto meteran">
 
-<button id="btnOcr">📷 Baca Angka dari Foto</button>
-
-<div id="ocrSection" class="hidden">
-  <label>WM Akhir (hasil OCR)</label>
-  <input type="text" id="wmAkhir">
-  <div class="warn">⚠️ Cek ulang angka di atas dengan foto di atas sebelum menyimpan. OCR bisa salah baca kalau foto buram/kotor/silau.</div>
-</div>
+<label>WM Akhir (lihat foto di atas, isi manual)</label>
+<input type="text" id="wmAkhir" placeholder="cth: 123456">
 
 <label>Keterangan</label>
 <textarea id="keterangan" rows="2" placeholder="cth: ada foto wm. Ada PDAM"></textarea>
 
-<button id="btnSave" class="hidden">✅ Simpan (Foto → Drive, Data → Sheet)</button>
+<button id="btnSave">✅ Simpan (Foto → Drive, Data → Sheet)</button>
 
 <div id="status"></div>
 
 <script>
-// GANTI dengan URL Web App Apps Script kamu setelah deploy
 const WEB_APP_URL = 'https://script.google.com/macros/s/AKfycbw1RfgpvAckPKagcV7c31w0IGxan5lrEKirey_u4UBVdf_Pp2y_NrnBndTpoW4WQwMz/exec';
 
 let base64Image = '';
 let locationsMap = {}; // nama -> { alamat, wmAwal }, tidak ditampilkan ke user
 
-// Muat daftar perusahaan ke dropdown saat halaman dibuka
 window.addEventListener('DOMContentLoaded', function () {
   fetch(WEB_APP_URL + '?action=getLocations')
     .then(res => res.json())
@@ -91,30 +81,6 @@ document.getElementById('foto').addEventListener('change', function (e) {
   reader.readAsDataURL(file);
 });
 
-document.getElementById('btnOcr').addEventListener('click', function () {
-  if (!base64Image) {
-    setStatus('Pilih/ambil foto dulu.');
-    return;
-  }
-  setStatus('Membaca angka, tunggu sebentar...');
-  fetch(WEB_APP_URL, {
-    method: 'POST',
-    body: JSON.stringify({ action: 'ocr', image: base64Image })
-  })
-    .then(res => res.json())
-    .then(data => {
-      if (data.success) {
-        document.getElementById('ocrSection').classList.remove('hidden');
-        document.getElementById('wmAkhir').value = (data.text || '').replace(/\n/g, ' ').trim();
-        document.getElementById('btnSave').classList.remove('hidden');
-        setStatus('Angka terbaca. Silakan cek & koreksi dulu sebelum simpan.');
-      } else {
-        setStatus('Gagal membaca: ' + data.error);
-      }
-    })
-    .catch(err => setStatus('Error koneksi: ' + err.message));
-});
-
 document.getElementById('btnSave').addEventListener('click', function () {
   const namaTerpilih = document.getElementById('lokasi').value;
   const info = locationsMap[namaTerpilih] || { alamat: '', wmAwal: 0 };
@@ -129,8 +95,16 @@ document.getElementById('btnSave').addEventListener('click', function () {
     image: base64Image
   };
 
-  if (!payload.nama || !payload.wmAkhir) {
-    setStatus('Pilih perusahaan dan pastikan WM Akhir sudah terisi.');
+  if (!payload.nama) {
+    setStatus('Pilih perusahaan dulu.');
+    return;
+  }
+  if (!payload.wmAkhir) {
+    setStatus('Isi WM Akhir dulu.');
+    return;
+  }
+  if (!base64Image) {
+    setStatus('Pilih/ambil foto meteran dulu.');
     return;
   }
 
