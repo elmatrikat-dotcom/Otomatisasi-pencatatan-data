@@ -3,129 +3,388 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Input Meteran Air</title>
+<title>Kartu Pencatatan Air Tanah</title>
 <style>
-  body { font-family: sans-serif; max-width: 480px; margin: 0 auto; padding: 16px; background:#f5f5f5; }
+  body { font-family: sans-serif; max-width: 720px; margin: 0 auto; padding: 16px; background:#f5f5f5; }
   h2 { text-align:center; }
-  label { display:block; margin-top:12px; font-weight:600; }
-  input, textarea, select { width:100%; padding:8px; margin-top:4px; box-sizing:border-box; font-size:15px; }
-  button { margin-top:16px; width:100%; padding:12px; font-size:16px; border:none; border-radius:6px; cursor:pointer; }
-  #btnSave { background:#188038; color:#fff; }
-  #preview { max-width:100%; margin-top:10px; border-radius:6px; display:none; }
+  h3 { border-bottom:2px solid #1a73e8; padding-bottom:4px; margin-top:24px; }
+  label { display:block; margin-top:10px; font-weight:600; font-size:14px; }
+  input, textarea, select { width:100%; padding:7px; margin-top:3px; box-sizing:border-box; font-size:14px; }
+  button { margin-top:10px; padding:10px 14px; font-size:14px; border:none; border-radius:6px; cursor:pointer; }
+  .btn-primary { background:#1a73e8; color:#fff; }
+  .btn-success { background:#188038; color:#fff; }
+  .btn-danger { background:#d93025; color:#fff; }
+  .btn-block { width:100%; }
+  .card { background:#fff; border:1px solid #ddd; border-radius:8px; padding:16px; margin-top:16px; }
+  .row2 { display:flex; gap:10px; }
+  .row2 > div { flex:1; }
+  table { width:100%; border-collapse: collapse; margin-top:8px; font-size:13px; }
+  th, td { border:1px solid #ddd; padding:6px; text-align:left; }
+  th { background:#f0f0f0; }
+  .hidden { display:none; }
   #status { margin-top:10px; font-size:14px; color:#555; min-height:20px; }
+  .link-foto { font-size:12px; }
+  .aksi-btn { padding:4px 8px; font-size:12px; margin:2px; }
+  #preview { max-width:100%; margin-top:8px; border-radius:6px; display:none; }
 </style>
 </head>
 <body>
 
-<h2>Input Data Meteran Air</h2>
+<h2>📋 Kartu Pencatatan Volume Air Tanah</h2>
 
-<label>Nama Perusahaan</label>
+<label>Pilih Perusahaan</label>
 <select id="lokasi">
   <option value="">-- Memuat daftar... --</option>
+  <option value="__NEW__">➕ Tambah Perusahaan Baru</option>
 </select>
-
-<label>Foto Meteran</label>
-<input type="file" id="foto" accept="image/*" capture="environment">
-<img id="preview" alt="preview foto meteran">
-
-<label>WM Akhir (lihat foto di atas, isi manual)</label>
-<input type="text" id="wmAkhir" placeholder="cth: 123456">
-
-<label>Keterangan</label>
-<textarea id="keterangan" rows="2" placeholder="cth: ada foto wm. Ada PDAM"></textarea>
-
-<button id="btnSave">✅ Simpan (Foto → Drive, Data → Sheet)</button>
 
 <div id="status"></div>
 
+<!-- ==================== FORM PERUSAHAAN BARU ==================== -->
+<div id="formBaru" class="card hidden">
+  <h3>Tambah Perusahaan Baru</h3>
+
+  <label>Nama Pengguna/Pengambil Air Tanah</label>
+  <input type="text" id="new_nama">
+
+  <label>Lokasi</label>
+  <textarea id="new_lokasi" rows="2"></textarea>
+
+  <div class="row2">
+    <div><label>Koordinat BT</label><input type="text" id="new_koordinatBT"></div>
+    <div><label>Koordinat LS</label><input type="text" id="new_koordinatLS"></div>
+  </div>
+
+  <div class="row2">
+    <div>
+      <label>Perizinan</label>
+      <select id="new_perizinan"><option>ADA</option><option>TIDAK</option></select>
+    </div>
+    <div>
+      <label>Jenis Pengambilan</label>
+      <select id="new_jenisPengambilan"><option>Sumur Bor</option><option>Sumur Gali/Suntik/Pasak</option></select>
+    </div>
+  </div>
+
+  <div class="row2">
+    <div>
+      <label>Sambungan PDAM</label>
+      <select id="new_sambunganPDAM"><option>ADA</option><option>TIDAK</option></select>
+    </div>
+    <div>
+      <label>Watermeter</label>
+      <select id="new_watermeter"><option>ADA</option><option>TIDAK</option><option>SEGEL</option></select>
+    </div>
+  </div>
+
+  <div class="row2">
+    <div><label>Kedalaman Sumur</label><input type="text" id="new_kedalamanSumur"></div>
+    <div><label>Sumur Ke-</label><input type="text" id="new_sumurKe"></div>
+  </div>
+
+  <label>Jenis Usaha</label>
+  <input type="text" id="new_jenisUsaha">
+
+  <label>Keterangan Umum</label>
+  <textarea id="new_keteranganUmum" rows="2"></textarea>
+
+  <div class="row2">
+    <div><label>Debit Izin Pemrakarsa (m³/hari)</label><input type="text" id="new_debitIzinPemrakarsaHari"></div>
+    <div><label>Debit Izin Pemrakarsa (m³/bulan)</label><input type="text" id="new_debitIzinPemrakarsaBulan"></div>
+  </div>
+  <div class="row2">
+    <div><label>Debit Izin Masyarakat (m³/hari)</label><input type="text" id="new_debitIzinMasyarakatHari"></div>
+    <div><label>Debit Izin Masyarakat (m³/bulan)</label><input type="text" id="new_debitIzinMasyarakatBulan"></div>
+  </div>
+
+  <div class="row2">
+    <div><label>Tanggal Izin Berakhir</label><input type="text" id="new_tanggalIzinBerakhir" placeholder="dd/mm/yyyy"></div>
+    <div><label>Tahun</label><input type="text" id="new_tahun" placeholder="cth: 2026"></div>
+  </div>
+
+  <button class="btn-success btn-block" id="btnSimpanBaru">✅ Simpan Perusahaan Baru</button>
+</div>
+
+<!-- ==================== KARTU IDENTITAS (perusahaan terpilih) ==================== -->
+<div id="kartuIdentitas" class="card hidden">
+  <h3>Identitas Perusahaan</h3>
+  <div id="viewIdentitas"></div>
+  <button class="btn-primary" id="btnEditIdentitas">✏️ Edit Identitas</button>
+  <button class="btn-danger" id="btnHapusPerusahaan">🗑️ Hapus Perusahaan Ini</button>
+
+  <div id="editIdentitasForm" class="hidden"></div>
+</div>
+
+<!-- ==================== TABEL 12 BULAN ==================== -->
+<div id="tabelBulanan" class="card hidden">
+  <h3>Histori Bacaan Meteran (12 Bulan)</h3>
+  <div style="overflow-x:auto;">
+    <table id="tabelHistori">
+      <thead>
+        <tr><th>Bulan</th><th>WM Awal</th><th>WM Akhir</th><th>Volume</th><th>Keterangan</th><th>Foto</th><th>Aksi</th></tr>
+      </thead>
+      <tbody id="tbodyHistori"></tbody>
+    </table>
+  </div>
+</div>
+
+<!-- ==================== FORM INPUT BULAN INI ==================== -->
+<div id="formBulanIni" class="card hidden">
+  <h3>Input / Update Bacaan Bulan Ini</h3>
+
+  <label>Bulan</label>
+  <select id="input_bulan"></select>
+
+  <label>Foto Meteran</label>
+  <input type="file" id="input_foto" accept="image/*" capture="environment">
+  <img id="preview" alt="preview">
+
+  <label>WM Akhir (lihat foto, isi manual)</label>
+  <input type="text" id="input_wmAkhir" placeholder="cth: 123456">
+
+  <label>Keterangan</label>
+  <textarea id="input_keterangan" rows="2" placeholder="cth: ada foto wm. Ada PDAM"></textarea>
+
+  <button class="btn-success btn-block" id="btnSimpanBulan">✅ Simpan Bacaan Bulan Ini</button>
+</div>
+
 <script>
-const WEB_APP_URL = 'https://script.google.com/macros/s/AKfycbw1RfgpvAckPKagcV7c31w0IGxan5lrEKirey_u4UBVdf_Pp2y_NrnBndTpoW4WQwMz/exec';
+const WEB_APP_URL = 'PASTE_URL_APPS_SCRIPT_DISINI';
+const MONTHS = ['Januari','Februari','Maret','April','Mei','Juni','Juli','Agustus','September','Oktober','November','Desember'];
+
+const IDENTITY_LABELS = {
+  nama: 'Nama', lokasi: 'Lokasi', koordinatBT: 'Koordinat BT', koordinatLS: 'Koordinat LS',
+  perizinan: 'Perizinan', jenisPengambilan: 'Jenis Pengambilan', sambunganPDAM: 'Sambungan PDAM',
+  watermeter: 'Watermeter', kedalamanSumur: 'Kedalaman Sumur', sumurKe: 'Sumur Ke',
+  jenisUsaha: 'Jenis Usaha', keteranganUmum: 'Keterangan Umum',
+  debitIzinPemrakarsaHari: 'Debit Izin Pemrakarsa (m³/hari)', debitIzinPemrakarsaBulan: 'Debit Izin Pemrakarsa (m³/bulan)',
+  debitIzinMasyarakatHari: 'Debit Izin Masyarakat (m³/hari)', debitIzinMasyarakatBulan: 'Debit Izin Masyarakat (m³/bulan)',
+  tanggalIzinBerakhir: 'Tanggal Izin Berakhir', tahun: 'Tahun'
+};
 
 let base64Image = '';
-let locationsMap = {}; // nama -> { alamat, wmAwal }, tidak ditampilkan ke user
+let currentNama = '';
+
+function setStatus(msg) { document.getElementById('status').innerText = msg; }
+
+// Isi dropdown bulan (default = bulan sekarang)
+(function initMonthSelect() {
+  const sel = document.getElementById('input_bulan');
+  MONTHS.forEach(m => { const o = document.createElement('option'); o.value = m; o.textContent = m; sel.appendChild(o); });
+  sel.value = MONTHS[new Date().getMonth()];
+})();
 
 window.addEventListener('DOMContentLoaded', function () {
-  fetch(WEB_APP_URL + '?action=getLocations')
+  fetch(WEB_APP_URL + '?action=getCompanies')
     .then(res => res.json())
     .then(data => {
       const select = document.getElementById('lokasi');
-      select.innerHTML = '<option value="">-- Pilih Perusahaan --</option>';
-      if (data.success && data.data.length > 0) {
-        data.data.forEach(loc => {
-          locationsMap[loc.nama] = { alamat: loc.alamat, wmAwal: loc.wmAwal };
-          const opt = document.createElement('option');
-          opt.value = loc.nama;
-          opt.textContent = loc.nama;
-          select.appendChild(opt);
-        });
-      } else {
-        select.innerHTML = '<option value="">-- Gagal memuat daftar --</option>';
+      const opts = ['<option value="">-- Pilih Perusahaan --</option>', '<option value="__NEW__">➕ Tambah Perusahaan Baru</option>'];
+      if (data.success) {
+        data.data.forEach(nama => opts.push(`<option value="${escapeHtml(nama)}">${escapeHtml(nama)}</option>`));
       }
+      select.innerHTML = opts.join('');
     })
-    .catch(() => {
-      document.getElementById('lokasi').innerHTML = '<option value="">-- Gagal memuat daftar --</option>';
+    .catch(() => setStatus('Gagal memuat daftar perusahaan.'));
+});
+
+document.getElementById('lokasi').addEventListener('change', function () {
+  const val = this.value;
+  document.getElementById('formBaru').classList.add('hidden');
+  document.getElementById('kartuIdentitas').classList.add('hidden');
+  document.getElementById('tabelBulanan').classList.add('hidden');
+  document.getElementById('formBulanIni').classList.add('hidden');
+  setStatus('');
+
+  if (val === '__NEW__') {
+    document.getElementById('formBaru').classList.remove('hidden');
+    return;
+  }
+  if (val) {
+    currentNama = val;
+    loadCompanyDetail(val);
+  }
+});
+
+function loadCompanyDetail(nama) {
+  setStatus('Memuat data...');
+  fetch(WEB_APP_URL + '?action=getCompanyDetail&nama=' + encodeURIComponent(nama))
+    .then(res => res.json())
+    .then(data => {
+      if (!data.success) { setStatus('Gagal memuat: ' + data.error); return; }
+      renderIdentitas(data.data.identity);
+      renderHistori(data.data.monthly);
+      document.getElementById('kartuIdentitas').classList.remove('hidden');
+      document.getElementById('tabelBulanan').classList.remove('hidden');
+      document.getElementById('formBulanIni').classList.remove('hidden');
+      setStatus('');
+    })
+    .catch(err => setStatus('Error: ' + err.message));
+}
+
+function renderIdentitas(identity) {
+  const view = document.getElementById('viewIdentitas');
+  view.innerHTML = Object.keys(IDENTITY_LABELS).map(key =>
+    `<div><strong>${IDENTITY_LABELS[key]}:</strong> ${escapeHtml(identity[key] || '-')}</div>`
+  ).join('');
+  document.getElementById('editIdentitasForm').classList.add('hidden');
+  document.getElementById('editIdentitasForm').innerHTML = '';
+}
+
+function renderHistori(monthly) {
+  const tbody = document.getElementById('tbodyHistori');
+  tbody.innerHTML = monthly.map(m => `
+    <tr>
+      <td>${m.bulan}</td>
+      <td>${m.wmAwal || ''}</td>
+      <td>${m.wmAkhir || ''}</td>
+      <td>${m.volume !== '' && m.volume !== undefined ? m.volume : ''}</td>
+      <td>${escapeHtml(m.keterangan || '')}</td>
+      <td>${m.foto ? `<a class="link-foto" href="${m.foto}" target="_blank">Lihat</a>` : '-'}</td>
+      <td>
+        ${m.wmAkhir ? `<button class="btn-danger aksi-btn" onclick="hapusBulan('${m.bulan}')">Hapus</button>` : ''}
+      </td>
+    </tr>
+  `).join('');
+}
+
+function hapusBulan(bulan) {
+  if (!confirm('Yakin hapus data bulan ' + bulan + ' untuk ' + currentNama + '?')) return;
+  setStatus('Menghapus...');
+  fetch(WEB_APP_URL, { method: 'POST', body: JSON.stringify({ action: 'deleteMonthEntry', nama: currentNama, bulan: bulan }) })
+    .then(res => res.json())
+    .then(data => {
+      if (data.success) { setStatus('✅ Data bulan ' + bulan + ' dihapus.'); loadCompanyDetail(currentNama); }
+      else setStatus('Gagal hapus: ' + data.error);
+    })
+    .catch(err => setStatus('Error: ' + err.message));
+}
+
+// ---- Edit identitas ----
+document.getElementById('btnEditIdentitas').addEventListener('click', function () {
+  const view = document.getElementById('viewIdentitas').innerText;
+  const form = document.getElementById('editIdentitasForm');
+  fetch(WEB_APP_URL + '?action=getCompanyDetail&nama=' + encodeURIComponent(currentNama))
+    .then(res => res.json())
+    .then(data => {
+      const identity = data.data.identity;
+      form.innerHTML = Object.keys(IDENTITY_LABELS).map(key =>
+        `<label>${IDENTITY_LABELS[key]}</label><input type="text" id="edit_${key}" value="${escapeHtml(identity[key] || '')}">`
+      ).join('') + '<button class="btn-success btn-block" id="btnSimpanEditIdentitas">💾 Simpan Perubahan Identitas</button>';
+      form.classList.remove('hidden');
+
+      document.getElementById('btnSimpanEditIdentitas').addEventListener('click', function () {
+        const payload = { action: 'updateCompanyIdentity', namaLama: currentNama };
+        Object.keys(IDENTITY_LABELS).forEach(key => { payload[key] = document.getElementById('edit_' + key).value; });
+        setStatus('Menyimpan identitas...');
+        fetch(WEB_APP_URL, { method: 'POST', body: JSON.stringify(payload) })
+          .then(res => res.json())
+          .then(res => {
+            if (res.success) {
+              setStatus('✅ Identitas diupdate.');
+              currentNama = payload.nama || currentNama;
+              loadCompanyDetail(currentNama);
+              refreshDropdown(currentNama);
+            } else setStatus('Gagal: ' + res.error);
+          })
+          .catch(err => setStatus('Error: ' + err.message));
+      });
     });
 });
 
-document.getElementById('foto').addEventListener('change', function (e) {
+// ---- Hapus perusahaan ----
+document.getElementById('btnHapusPerusahaan').addEventListener('click', function () {
+  if (!confirm('Yakin HAPUS SELURUH DATA perusahaan "' + currentNama + '"? Tindakan ini tidak bisa dibatalkan.')) return;
+  setStatus('Menghapus perusahaan...');
+  fetch(WEB_APP_URL, { method: 'POST', body: JSON.stringify({ action: 'deleteCompany', nama: currentNama }) })
+    .then(res => res.json())
+    .then(data => {
+      if (data.success) {
+        setStatus('✅ Perusahaan dihapus.');
+        document.getElementById('kartuIdentitas').classList.add('hidden');
+        document.getElementById('tabelBulanan').classList.add('hidden');
+        document.getElementById('formBulanIni').classList.add('hidden');
+        refreshDropdown('');
+      } else setStatus('Gagal: ' + data.error);
+    })
+    .catch(err => setStatus('Error: ' + err.message));
+});
+
+// ---- Tambah perusahaan baru ----
+document.getElementById('btnSimpanBaru').addEventListener('click', function () {
+  const payload = { action: 'createCompany' };
+  Object.keys(IDENTITY_LABELS).forEach(key => { payload[key] = document.getElementById('new_' + key).value; });
+  if (!payload.nama) { setStatus('Nama perusahaan wajib diisi.'); return; }
+  setStatus('Menyimpan perusahaan baru...');
+  fetch(WEB_APP_URL, { method: 'POST', body: JSON.stringify(payload) })
+    .then(res => res.json())
+    .then(data => {
+      if (data.success) {
+        setStatus('✅ Perusahaan baru ditambahkan.');
+        document.getElementById('formBaru').classList.add('hidden');
+        refreshDropdown(payload.nama);
+      } else setStatus('Gagal: ' + data.error);
+    })
+    .catch(err => setStatus('Error: ' + err.message));
+});
+
+// ---- Foto preview ----
+document.getElementById('input_foto').addEventListener('change', function (e) {
   const file = e.target.files[0];
   if (!file) return;
   const reader = new FileReader();
   reader.onload = function (evt) {
-    const result = evt.target.result;
-    base64Image = result.split(',')[1];
+    base64Image = evt.target.result.split(',')[1];
     const preview = document.getElementById('preview');
-    preview.src = result;
+    preview.src = evt.target.result;
     preview.style.display = 'block';
   };
   reader.readAsDataURL(file);
 });
 
-document.getElementById('btnSave').addEventListener('click', function () {
-  const namaTerpilih = document.getElementById('lokasi').value;
-  const info = locationsMap[namaTerpilih] || { alamat: '', wmAwal: 0 };
-
+// ---- Simpan bacaan bulan ini ----
+document.getElementById('btnSimpanBulan').addEventListener('click', function () {
   const payload = {
-    action: 'save',
-    nama: namaTerpilih,
-    alamat: info.alamat,
-    wmAwal: info.wmAwal,
-    wmAkhir: document.getElementById('wmAkhir').value,
-    keterangan: document.getElementById('keterangan').value,
+    action: 'saveMonthEntry',
+    nama: currentNama,
+    bulan: document.getElementById('input_bulan').value,
+    wmAkhir: document.getElementById('input_wmAkhir').value,
+    keterangan: document.getElementById('input_keterangan').value,
     image: base64Image
   };
-
-  if (!payload.nama) {
-    setStatus('Pilih perusahaan dulu.');
-    return;
-  }
-  if (!payload.wmAkhir) {
-    setStatus('Isi WM Akhir dulu.');
-    return;
-  }
-  if (!base64Image) {
-    setStatus('Pilih/ambil foto meteran dulu.');
-    return;
-  }
-
-  setStatus('Menyimpan data...');
-  fetch(WEB_APP_URL, {
-    method: 'POST',
-    body: JSON.stringify(payload)
-  })
+  if (!payload.wmAkhir) { setStatus('Isi WM Akhir dulu.'); return; }
+  setStatus('Menyimpan data bulan ini...');
+  fetch(WEB_APP_URL, { method: 'POST', body: JSON.stringify(payload) })
     .then(res => res.json())
     .then(data => {
       if (data.success) {
-        setStatus('✅ Tersimpan! Foto masuk ke Drive, data masuk ke Spreadsheet.');
-      } else {
-        setStatus('Gagal menyimpan: ' + data.error);
-      }
+        setStatus('✅ Data bulan ' + payload.bulan + ' tersimpan.');
+        document.getElementById('input_wmAkhir').value = '';
+        document.getElementById('input_keterangan').value = '';
+        document.getElementById('preview').style.display = 'none';
+        base64Image = '';
+        loadCompanyDetail(currentNama);
+      } else setStatus('Gagal: ' + data.error);
     })
-    .catch(err => setStatus('Error koneksi: ' + err.message));
+    .catch(err => setStatus('Error: ' + err.message));
 });
 
-function setStatus(msg) {
-  document.getElementById('status').innerText = msg;
+function refreshDropdown(selectValue) {
+  fetch(WEB_APP_URL + '?action=getCompanies')
+    .then(res => res.json())
+    .then(data => {
+      const select = document.getElementById('lokasi');
+      const opts = ['<option value="">-- Pilih Perusahaan --</option>', '<option value="__NEW__">➕ Tambah Perusahaan Baru</option>'];
+      if (data.success) {
+        data.data.forEach(nama => opts.push(`<option value="${escapeHtml(nama)}">${escapeHtml(nama)}</option>`));
+      }
+      select.innerHTML = opts.join('');
+      if (selectValue) { select.value = selectValue; select.dispatchEvent(new Event('change')); }
+    });
+}
+
+function escapeHtml(str) {
+  return String(str).replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
 }
 </script>
 
