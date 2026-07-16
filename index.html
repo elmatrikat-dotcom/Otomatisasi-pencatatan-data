@@ -282,7 +282,6 @@ function renderIdentitas(identity) {
     <tr><td class="label-cell">Status Izin</td><td>${checkboxRow(identity.statusIzin, 'Izin', 'Non Izin')}</td></tr>
     <tr><td class="label-cell">Jenis Pengambilan</td><td>${checkboxRow(identity.jenisSumur, 'Sumur Bor', 'Sumur Gali/Pantek/Pasak')}</td></tr>
     <tr><td class="label-cell">Watermeter</td><td>${checkboxRow(identity.meteran, 'WM', 'Non WM')}</td></tr>
-    <tr><td class="label-cell">Status Bangun Sumur</td><td>${checkboxRow(identity.statusBangunSumur, 'Sudah Membangun Sumur', 'Belum/Proses Membangun Sumur')}</td></tr>
     <tr><td class="label-cell">Kedalaman Sumur</td><td>${v('kedalamanSumur')}</td></tr>
     <tr><td class="label-cell">No Izin SIPA</td><td>${v('noIzinSipa')}</td></tr>
     <tr>
@@ -291,7 +290,6 @@ function renderIdentitas(identity) {
     </tr>
     <tr><td class="label-cell">Tgl Akhir Izin</td><td>${v('tglAkhirIzin')}</td></tr>
     <tr><td class="label-cell">No Registrasi Sumur</td><td>${v('noRegistrasiSumur')}</td></tr>
-    <tr><td class="label-cell">Kategori Izin</td><td>${v('kategoriIzin')}</td></tr>
     <tr>
       <td class="label-cell">Debit Izin Pemrakarsa</td>
       <td class="split-cell"><div><span><strong>Harian:</strong> ${v('debitPemrakarsaHarian')} m³</span><span><strong>Bulanan:</strong> ${v('debitPemrakarsaBulanan')} m³</span></div></td>
@@ -311,7 +309,6 @@ function buildMonthBlock(monthlySlice) {
   const th = monthlySlice.map(m => `<th>${m.bulan}</th>`).join('');
   const angkaRow = monthlySlice.map(m => `<td>${m.wmAkhir || '-'}</td>`).join('');
   const volumeRow = monthlySlice.map(m => `<td>${(m.volume !== '' && m.volume !== undefined) ? m.volume : '-'}</td>`).join('');
-  const ketRow = monthlySlice.map(m => `<td class="keterangan-cell">${escapeHtml(m.keterangan || '-')}</td>`).join('');
   const fotoRow = monthlySlice.map(m => `<td>${m.foto ? `<a class="link-foto" href="${m.foto}" target="_blank">Lihat</a>` : '-'}</td>`).join('');
   const aksiRow = monthlySlice.map(m => `<td>${m.wmAkhir ? `<button class="btn-danger aksi-btn" onclick="hapusBulan('${m.bulan}')">Hapus</button>` : '-'}</td>`).join('');
 
@@ -320,7 +317,6 @@ function buildMonthBlock(monthlySlice) {
     <tr><th class="row-label">Bulan</th>${th}</tr>
     <tr><td class="row-label">Angka Meter Air</td>${angkaRow}</tr>
     <tr><td class="row-label">Volume Pemakaian (m³)</td>${volumeRow}</tr>
-    <tr><td class="row-label">Keterangan</td>${ketRow}</tr>
     <tr><td class="row-label">Foto</td>${fotoRow}</tr>
     <tr><td class="row-label">Aksi</td>${aksiRow}</tr>
   </table>`;
