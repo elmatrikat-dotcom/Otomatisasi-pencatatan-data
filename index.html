@@ -44,63 +44,80 @@
 <div id="formBaru" class="card hidden">
   <h3>Tambah Perusahaan Baru</h3>
 
-  <label>Nama Pengguna/Pengambil Air Tanah</label>
+  <label>Nama Perusahaan</label>
   <input type="text" id="new_nama">
 
-  <label>Lokasi</label>
-  <textarea id="new_lokasi" rows="2"></textarea>
+  <label>Alamat Perusahaan/Kantor</label>
+  <textarea id="new_alamatKantor" rows="2"></textarea>
+
+  <label>Lokasi Sumur</label>
+  <textarea id="new_lokasiSumur" rows="2"></textarea>
 
   <div class="row2">
-    <div><label>Koordinat BT</label><input type="text" id="new_koordinatBT"></div>
-    <div><label>Koordinat LS</label><input type="text" id="new_koordinatLS"></div>
+    <div><label>Koordinat Y</label><input type="text" id="new_koordinatY"></div>
+    <div><label>Koordinat X</label><input type="text" id="new_koordinatX"></div>
+  </div>
+
+  <div class="row2">
+    <div><label>No Izin SIPA</label><input type="text" id="new_noIzinSipa"></div>
+    <div><label>No Registrasi Sumur</label><input type="text" id="new_noRegistrasiSumur"></div>
+  </div>
+
+  <div class="row2">
+    <div><label>Tgl Izin</label><input type="text" id="new_tglIzin" placeholder="cth: 06 Agustus 2025"></div>
+    <div><label>Berlaku</label><input type="text" id="new_berlaku" placeholder="cth: 5 Tahun"></div>
+  </div>
+
+  <label>Tgl Akhir Izin</label>
+  <input type="text" id="new_tglAkhirIzin">
+
+  <label>Kedalaman Sumur</label>
+  <input type="text" id="new_kedalamanSumur" placeholder="cth: 10 Meter">
+
+  <div class="row2">
+    <div><label>Debit Izin Pemrakarsa Harian (m³/hari)</label><input type="text" id="new_debitPemrakarsaHarian"></div>
+    <div><label>Debit Izin Pemrakarsa Bulanan (m³/bulan)</label><input type="text" id="new_debitPemrakarsaBulanan"></div>
+  </div>
+  <div class="row2">
+    <div><label>Debit Izin Masyarakat Harian (m³/hari)</label><input type="text" id="new_debitMasyarakatHarian"></div>
+    <div><label>Debit Izin Masyarakat Bulanan (m³/bulan)</label><input type="text" id="new_debitMasyarakatBulanan"></div>
   </div>
 
   <div class="row2">
     <div>
-      <label>Perizinan</label>
-      <select id="new_perizinan"><option>ADA</option><option>TIDAK</option></select>
+      <label>Jenis Sumur</label>
+      <select id="new_jenisSumur"><option value="">--</option><option>Sumur Bor</option><option>Sumur Gali/Pantek/Pasak</option></select>
     </div>
     <div>
-      <label>Jenis Pengambilan</label>
-      <select id="new_jenisPengambilan"><option>Sumur Bor</option><option>Sumur Gali/Suntik/Pasak</option></select>
+      <label>Meteran</label>
+      <select id="new_meteran"><option value="">--</option><option>WM</option><option>Non WM</option></select>
     </div>
   </div>
 
   <div class="row2">
     <div>
-      <label>Sambungan PDAM</label>
-      <select id="new_sambunganPDAM"><option>ADA</option><option>TIDAK</option></select>
+      <label>Status Izin</label>
+      <select id="new_statusIzin"><option value="">--</option><option>Izin</option><option>Non Izin</option></select>
     </div>
     <div>
-      <label>Watermeter</label>
-      <select id="new_watermeter"><option>ADA</option><option>TIDAK</option><option>SEGEL</option></select>
+      <label>Status Bangun Sumur</label>
+      <select id="new_statusBangunSumur"><option value="">--</option><option>Sudah Membangun Sumur</option><option>Belum/Proses Membangun Sumur</option></select>
     </div>
   </div>
 
-  <div class="row2">
-    <div><label>Kedalaman Sumur</label><input type="text" id="new_kedalamanSumur"></div>
-    <div><label>Sumur Ke-</label><input type="text" id="new_sumurKe"></div>
-  </div>
+  <label>Kategori Izin</label>
+  <select id="new_kategoriIzin">
+    <option value="">--</option>
+    <option>IZIN PENGUSAHAAN AIR TANAH (PENATAAN)</option>
+    <option>PERPANJANGAN PERSETUJUAN PENGGUNAAN AIR TANAH (PERPANJANGAN IZIN PEMDA DIY)</option>
+    <option>IZIN PENGUSAHAAN AIR TANAH BARU</option>
+    <option>PERPANJANGAN IZIN PENGUSAHAAN AIR TANAH</option>
+    <option>PERSETUJUAN PENGGUNAAN AIR TANAH BARU</option>
+    <option>PERSETUJUAN PENGGUNAAN AIR TANAH (PENATAAN)</option>
+  </select>
 
-  <label>Jenis Usaha</label>
-  <input type="text" id="new_jenisUsaha">
-
-  <label>Keterangan Umum</label>
-  <textarea id="new_keteranganUmum" rows="2"></textarea>
-
-  <div class="row2">
-    <div><label>Debit Izin Pemrakarsa (m³/hari)</label><input type="text" id="new_debitIzinPemrakarsaHari"></div>
-    <div><label>Debit Izin Pemrakarsa (m³/bulan)</label><input type="text" id="new_debitIzinPemrakarsaBulan"></div>
-  </div>
-  <div class="row2">
-    <div><label>Debit Izin Masyarakat (m³/hari)</label><input type="text" id="new_debitIzinMasyarakatHari"></div>
-    <div><label>Debit Izin Masyarakat (m³/bulan)</label><input type="text" id="new_debitIzinMasyarakatBulan"></div>
-  </div>
-
-  <div class="row2">
-    <div><label>Tanggal Izin Berakhir</label><input type="text" id="new_tanggalIzinBerakhir" placeholder="dd/mm/yyyy"></div>
-    <div><label>Tahun</label><input type="text" id="new_tahun" placeholder="cth: 2026"></div>
-  </div>
+  <label>Keterangan Sumur</label>
+  <textarea id="new_keteranganSumur" rows="2"></textarea>
 
   <button class="btn-success btn-block" id="btnSimpanBaru">✅ Simpan Perusahaan Baru</button>
 </div>
@@ -153,13 +170,16 @@ const WEB_APP_URL = 'https://script.google.com/macros/s/AKfycbw1RfgpvAckPKagcV7c
 const MONTHS = ['Januari','Februari','Maret','April','Mei','Juni','Juli','Agustus','September','Oktober','November','Desember'];
 
 const IDENTITY_LABELS = {
-  nama: 'Nama', lokasi: 'Lokasi', koordinatBT: 'Koordinat BT', koordinatLS: 'Koordinat LS',
-  perizinan: 'Perizinan', jenisPengambilan: 'Jenis Pengambilan', sambunganPDAM: 'Sambungan PDAM',
-  watermeter: 'Watermeter', kedalamanSumur: 'Kedalaman Sumur', sumurKe: 'Sumur Ke',
-  jenisUsaha: 'Jenis Usaha', keteranganUmum: 'Keterangan Umum',
-  debitIzinPemrakarsaHari: 'Debit Izin Pemrakarsa (m³/hari)', debitIzinPemrakarsaBulan: 'Debit Izin Pemrakarsa (m³/bulan)',
-  debitIzinMasyarakatHari: 'Debit Izin Masyarakat (m³/hari)', debitIzinMasyarakatBulan: 'Debit Izin Masyarakat (m³/bulan)',
-  tanggalIzinBerakhir: 'Tanggal Izin Berakhir', tahun: 'Tahun'
+  nama: 'Nama', alamatKantor: 'Alamat Perusahaan/Kantor', lokasiSumur: 'Lokasi Sumur',
+  koordinatY: 'Koordinat Y', koordinatX: 'Koordinat X',
+  noIzinSipa: 'No Izin SIPA', tglIzin: 'Tgl Izin', berlaku: 'Berlaku', tglAkhirIzin: 'Tgl Akhir Izin',
+  noRegistrasiSumur: 'No Registrasi Sumur', kedalamanSumur: 'Kedalaman Sumur',
+  debitPemrakarsaHarian: 'Debit Izin Pemrakarsa Harian (m³/hari)',
+  debitPemrakarsaBulanan: 'Debit Izin Pemrakarsa Bulanan (m³/bulan)',
+  debitMasyarakatHarian: 'Debit Izin Masyarakat Harian (m³/hari)',
+  debitMasyarakatBulanan: 'Debit Izin Masyarakat Bulanan (m³/bulan)',
+  jenisSumur: 'Jenis Sumur', meteran: 'Meteran', statusIzin: 'Status Izin',
+  kategoriIzin: 'Kategori Izin', statusBangunSumur: 'Status Bangun Sumur', keteranganSumur: 'Keterangan Sumur'
 };
 
 let base64Image = '';
@@ -167,7 +187,6 @@ let currentNama = '';
 
 function setStatus(msg) { document.getElementById('status').innerText = msg; }
 
-// Isi dropdown bulan (default = bulan sekarang)
 (function initMonthSelect() {
   const sel = document.getElementById('input_bulan');
   MONTHS.forEach(m => { const o = document.createElement('option'); o.value = m; o.textContent = m; sel.appendChild(o); });
@@ -260,9 +279,7 @@ function hapusBulan(bulan) {
     .catch(err => setStatus('Error: ' + err.message));
 }
 
-// ---- Edit identitas ----
 document.getElementById('btnEditIdentitas').addEventListener('click', function () {
-  const view = document.getElementById('viewIdentitas').innerText;
   const form = document.getElementById('editIdentitasForm');
   fetch(WEB_APP_URL + '?action=getCompanyDetail&nama=' + encodeURIComponent(currentNama))
     .then(res => res.json())
@@ -292,7 +309,6 @@ document.getElementById('btnEditIdentitas').addEventListener('click', function (
     });
 });
 
-// ---- Hapus perusahaan ----
 document.getElementById('btnHapusPerusahaan').addEventListener('click', function () {
   if (!confirm('Yakin HAPUS SELURUH DATA perusahaan "' + currentNama + '"? Tindakan ini tidak bisa dibatalkan.')) return;
   setStatus('Menghapus perusahaan...');
@@ -310,7 +326,6 @@ document.getElementById('btnHapusPerusahaan').addEventListener('click', function
     .catch(err => setStatus('Error: ' + err.message));
 });
 
-// ---- Tambah perusahaan baru ----
 document.getElementById('btnSimpanBaru').addEventListener('click', function () {
   const payload = { action: 'createCompany' };
   Object.keys(IDENTITY_LABELS).forEach(key => { payload[key] = document.getElementById('new_' + key).value; });
@@ -328,7 +343,6 @@ document.getElementById('btnSimpanBaru').addEventListener('click', function () {
     .catch(err => setStatus('Error: ' + err.message));
 });
 
-// ---- Foto preview ----
 document.getElementById('input_foto').addEventListener('change', function (e) {
   const file = e.target.files[0];
   if (!file) return;
@@ -342,7 +356,6 @@ document.getElementById('input_foto').addEventListener('change', function (e) {
   reader.readAsDataURL(file);
 });
 
-// ---- Simpan bacaan bulan ini ----
 document.getElementById('btnSimpanBulan').addEventListener('click', function () {
   const payload = {
     action: 'saveMonthEntry',
