@@ -146,6 +146,7 @@
   <h3>Identitas Perusahaan</h3>
   <div id="viewIdentitas"></div>
   <button class="btn-primary" id="btnEditIdentitas">✏️ Edit Identitas</button>
+  <button class="btn-primary" id="btnExportPdf">🖨️ Export PDF Kartu Ini</button>
   <button class="btn-danger" id="btnHapusPerusahaan">🗑️ Hapus Perusahaan Ini</button>
 
   <div id="editIdentitasForm" class="hidden"></div>
@@ -369,6 +370,21 @@ document.getElementById('btnEditIdentitas').addEventListener('click', function (
           .catch(err => setStatus('Error: ' + err.message));
       });
     });
+});
+
+document.getElementById('btnExportPdf').addEventListener('click', function () {
+  setStatus('Membuat PDF, tunggu sebentar...');
+  fetch(WEB_APP_URL, { method: 'POST', body: JSON.stringify({ action: 'exportSinglePDF', nama: currentNama }) })
+    .then(res => res.json())
+    .then(data => {
+      if (data.success) {
+        setStatus('✅ PDF siap.');
+        window.open(data.result.url, '_blank');
+      } else {
+        setStatus('Gagal export: ' + data.error);
+      }
+    })
+    .catch(err => setStatus('Error: ' + err.message));
 });
 
 document.getElementById('btnHapusPerusahaan').addEventListener('click', function () {
