@@ -1,0 +1,159 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Input Meteran Air</title>
+<style>
+  body { font-family: sans-serif; max-width: 480px; margin: 0 auto; padding: 16px; background:#f5f5f5; }
+  h2 { text-align:center; }
+  label { display:block; margin-top:12px; font-weight:600; }
+  input, textarea { width:100%; padding:8px; margin-top:4px; box-sizing:border-box; font-size:15px; }
+  button { margin-top:16px; width:100%; padding:12px; font-size:16px; border:none; border-radius:6px; cursor:pointer; }
+  #btnOcr { background:#1a73e8; color:#fff; }
+  #btnSave { background:#188038; color:#fff; }
+  #preview { max-width:100%; margin-top:10px; border-radius:6px; display:none; }
+  #status { margin-top:10px; font-size:14px; color:#555; min-height:20px; }
+  .hidden { display:none; }
+  .warn { background:#fff3cd; border:1px solid #ffe69c; padding:8px; border-radius:6px; font-size:13px; margin-top:8px; }
+</style>
+</head>
+<body>
+
+<h2>Input Data Meteran Air</h2>
+
+<label>Nama Perusahaan</label>
+<select id="lokasi">
+  <option value="">-- Memuat daftar... --</option>
+</select>
+
+<label>Foto Meteran</label>
+<input type="file" id="foto" accept="image/*" capture="environment">
+<img id="preview" alt="preview foto meteran">
+
+<button id="btnOcr">📷 Baca Angka dari Foto</button>
+
+<div id="ocrSection" class="hidden">
+  <label>WM Akhir (hasil OCR)</label>
+  <input type="text" id="wmAkhir">
+  <div class="warn">⚠️ Cek ulang angka di atas dengan foto di atas sebelum menyimpan. OCR bisa salah baca kalau foto buram/kotor/silau.</div>
+</div>
+
+<label>Keterangan</label>
+<textarea id="keterangan" rows="2" placeholder="cth: ada foto wm. Ada PDAM"></textarea>
+
+<button id="btnSave" class="hidden">✅ Simpan (Foto → Drive, Data → Sheet)</button>
+
+<div id="status"></div>
+
+<script>
+// GANTI dengan URL Web App Apps Script kamu setelah deploy
+const WEB_APP_URL = 'https://script.google.com/macros/s/AKfycbw1RfgpvAckPKagcV7c31w0IGxan5lrEKirey_u4UBVdf_Pp2y_NrnBndTpoW4WQwMz/exec';
+
+let base64Image = '';
+let locationsMap = {}; // nama -> { alamat, wmAwal }, tidak ditampilkan ke user
+
+// Muat daftar perusahaan ke dropdown saat halaman dibuka
+window.addEventListener('DOMContentLoaded', function () {
+  fetch(WEB_APP_URL + '?action=getLocations')
+    .then(res => res.json())
+    .then(data => {
+      const select = document.getElementById('lokasi');
+      select.innerHTML = '<option value="">-- Pilih Perusahaan --</option>';
+      if (data.success && data.data.length > 0) {
+        data.data.forEach(loc => {
+          locationsMap[loc.nama] = { alamat: loc.alamat, wmAwal: loc.wmAwal };
+          const opt = document.createElement('option');
+          opt.value = loc.nama;
+          opt.textContent = loc.nama;
+          select.appendChild(opt);
+        });
+      } else {
+        select.innerHTML = '<option value="">-- Gagal memuat daftar --</option>';
+      }
+    })
+    .catch(() => {
+      document.getElementById('lokasi').innerHTML = '<option value="">-- Gagal memuat daftar --</option>';
+    });
+});
+
+document.getElementById('foto').addEventListener('change', function (e) {
+  const file = e.target.files[0];
+  if (!file) return;
+  const reader = new FileReader();
+  reader.onload = function (evt) {
+    const result = evt.target.result;
+    base64Image = result.split(',')[1];
+    const preview = document.getElementById('preview');
+    preview.src = result;
+    preview.style.display = 'block';
+  };
+  reader.readAsDataURL(file);
+});
+
+document.getElementById('btnOcr').addEventListener('click', function () {
+  if (!base64Image) {
+    setStatus('Pilih/ambil foto dulu.');
+    return;
+  }
+  setStatus('Membaca angka, tunggu sebentar...');
+  fetch(WEB_APP_URL, {
+    method: 'POST',
+    body: JSON.stringify({ action: 'ocr', image: base64Image })
+  })
+    .then(res => res.json())
+    .then(data => {
+      if (data.success) {
+        document.getElementById('ocrSection').classList.remove('hidden');
+        document.getElementById('wmAkhir').value = (data.text || '').replace(/\n/g, ' ').trim();
+        document.getElementById('btnSave').classList.remove('hidden');
+        setStatus('Angka terbaca. Silakan cek & koreksi dulu sebelum simpan.');
+      } else {
+        setStatus('Gagal membaca: ' + data.error);
+      }
+    })
+    .catch(err => setStatus('Error koneksi: ' + err.message));
+});
+
+document.getElementById('btnSave').addEventListener('click', function () {
+  const namaTerpilih = document.getElementById('lokasi').value;
+  const info = locationsMap[namaTerpilih] || { alamat: '', wmAwal: 0 };
+
+  const payload = {
+    action: 'save',
+    nama: namaTerpilih,
+    alamat: info.alamat,
+    wmAwal: info.wmAwal,
+    wmAkhir: document.getElementById('wmAkhir').value,
+    keterangan: document.getElementById('keterangan').value,
+    image: base64Image
+  };
+
+  if (!payload.nama || !payload.wmAkhir) {
+    setStatus('Pilih perusahaan dan pastikan WM Akhir sudah terisi.');
+    return;
+  }
+
+  setStatus('Menyimpan data...');
+  fetch(WEB_APP_URL, {
+    method: 'POST',
+    body: JSON.stringify(payload)
+  })
+    .then(res => res.json())
+    .then(data => {
+      if (data.success) {
+        setStatus('✅ Tersimpan! Foto masuk ke Drive, data masuk ke Spreadsheet.');
+      } else {
+        setStatus('Gagal menyimpan: ' + data.error);
+      }
+    })
+    .catch(err => setStatus('Error koneksi: ' + err.message));
+});
+
+function setStatus(msg) {
+  document.getElementById('status').innerText = msg;
+}
+</script>
+
+</body>
+</html>
