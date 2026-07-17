@@ -51,6 +51,17 @@
 
 <h2>📋 Kartu Pencatatan Volume Air Tanah</h2>
 
+<label>Pilih Kabupaten/Kota</label>
+<select id="kabupatenSelect"></select>
+
+<label>Pilih Kapanewon/Kemantren</label>
+<select id="kapanewonFilter">
+  <option value="">-- Semua Kapanewon --</option>
+</select>
+
+<label>Cari Nama Perusahaan</label>
+<input type="text" id="searchNama" placeholder="Ketik untuk mencari...">
+
 <label>Pilih Perusahaan</label>
 <select id="lokasi">
   <option value="">-- Memuat daftar... --</option>
@@ -138,6 +149,9 @@
   <label>Keterangan Sumur</label>
   <textarea id="new_keteranganSumur" rows="2"></textarea>
 
+  <label>Kapanewon/Kemantren</label>
+  <input type="text" id="new_kapanewon" placeholder="cth: Banguntapan">
+
   <button class="btn-success btn-block" id="btnSimpanBaru">✅ Simpan Perusahaan Baru</button>
 </div>
 
@@ -189,7 +203,23 @@
 </div>
 
 <script>
-const WEB_APP_URL = 'https://script.google.com/macros/s/AKfycbwilCg4J3qe__qit8s9oj2bU1fqe8Wal3DGfMVzQJlUwyGLtVI6MXpQV4ivkinuRxbdOg/exec';
+// Konfigurasi per kabupaten/kota DIY. Setiap kabupaten = 1 spreadsheet + 1 Web App URL terpisah.
+// "active: false" berarti belum ada datanya -> muncul di dropdown tapi disabled (nonaktif).
+const KABUPATEN_CONFIG = {
+  bantul: {
+    label: 'Kabupaten Bantul',
+    url: 'https://script.google.com/macros/s/AKfycbwilCg4J3qe__qit8s9oj2bU1fqe8Wal3DGfMVzQJlUwyGLtVI6MXpQV4ivkinuRxbdOg/exec',
+    active: true
+  },
+  sleman: { label: 'Kabupaten Sleman', url: '', active: false },
+  gunungkidul: { label: 'Kabupaten Gunungkidul', url: '', active: false },
+  kulonprogo: { label: 'Kabupaten Kulon Progo', url: '', active: false },
+  kotayogyakarta: { label: 'Kota Yogyakarta', url: '', active: false }
+};
+
+let ACTIVE_WEB_APP_URL = KABUPATEN_CONFIG.bantul.url;
+let allCompanies = []; // [{nama, kapanewon}] hasil getCompanies dari kabupaten yang aktif
+
 const MONTHS = ['Januari','Februari','Maret','April','Mei','Juni','Juli','Agustus','September','Oktober','November','Desember'];
 
 const IDENTITY_LABELS = {
@@ -202,7 +232,8 @@ const IDENTITY_LABELS = {
   debitMasyarakatHarian: 'Debit Izin Masyarakat Harian (m³/hari)',
   debitMasyarakatBulanan: 'Debit Izin Masyarakat Bulanan (m³/bulan)',
   jenisSumur: 'Jenis Sumur', meteran: 'Meteran', statusIzin: 'Status Izin',
-  kategoriIzin: 'Kategori Izin', statusBangunSumur: 'Status Bangun Sumur', keteranganSumur: 'Keterangan Sumur'
+  kategoriIzin: 'Kategori Izin', statusBangunSumur: 'Status Bangun Sumur', keteranganSumur: 'Keterangan Sumur',
+  kapanewon: 'Kapanewon/Kemantren'
 };
 
 let base64Image = '';
@@ -216,18 +247,73 @@ function setStatus(msg) { document.getElementById('status').innerText = msg; }
   sel.value = MONTHS[new Date().getMonth()];
 })();
 
-window.addEventListener('DOMContentLoaded', function () {
-  fetch(WEB_APP_URL + '?action=getCompanies')
+// ---- Dropdown Kabupaten ----
+(function initKabupatenSelect() {
+  const sel = document.getElementById('kabupatenSelect');
+  sel.innerHTML = Object.keys(KABUPATEN_CONFIG).map(key => {
+    const k = KABUPATEN_CONFIG[key];
+    const disabledAttr = k.active ? '' : 'disabled';
+    const labelText = k.active ? k.label : k.label + ' (segera hadir)';
+    return `<option value="${key}" ${disabledAttr}>${labelText}</option>`;
+  }).join('');
+  sel.value = 'bantul';
+})();
+
+document.getElementById('kabupatenSelect').addEventListener('change', function () {
+  const cfg = KABUPATEN_CONFIG[this.value];
+  if (!cfg || !cfg.active) { setStatus('Data kabupaten ini belum tersedia.'); return; }
+  ACTIVE_WEB_APP_URL = cfg.url;
+  resetToCompanyList();
+});
+
+function resetToCompanyList() {
+  document.getElementById('formBaru').classList.add('hidden');
+  document.getElementById('kartuIdentitas').classList.add('hidden');
+  document.getElementById('tabelBulanan').classList.add('hidden');
+  document.getElementById('formBulanIni').classList.add('hidden');
+  loadCompanyList();
+}
+
+function loadCompanyList() {
+  setStatus('Memuat daftar perusahaan...');
+  fetch(ACTIVE_WEB_APP_URL + '?action=getCompanies')
     .then(res => res.json())
     .then(data => {
-      const select = document.getElementById('lokasi');
-      const opts = ['<option value="">-- Pilih Perusahaan --</option>', '<option value="__NEW__">➕ Tambah Perusahaan Baru</option>'];
-      if (data.success) {
-        data.data.forEach(nama => opts.push(`<option value="${escapeHtml(nama)}">${escapeHtml(nama)}</option>`));
-      }
-      select.innerHTML = opts.join('');
+      allCompanies = data.success ? data.data : [];
+      buildKapanewonFilter();
+      buildNamaOptions();
+      setStatus('');
     })
     .catch(() => setStatus('Gagal memuat daftar perusahaan.'));
+}
+
+function buildKapanewonFilter() {
+  const sel = document.getElementById('kapanewonFilter');
+  const unique = [...new Set(allCompanies.map(c => c.kapanewon).filter(k => k))].sort();
+  sel.innerHTML = '<option value="">-- Semua Kapanewon --</option>' +
+    unique.map(k => `<option value="${escapeHtml(k)}">${escapeHtml(k)}</option>`).join('');
+}
+
+// Bangun ulang opsi dropdown Nama berdasarkan filter Kapanewon + kata kunci pencarian
+function buildNamaOptions() {
+  const kapanewonVal = document.getElementById('kapanewonFilter').value;
+  const searchVal = document.getElementById('searchNama').value.trim().toLowerCase();
+
+  let filtered = allCompanies;
+  if (kapanewonVal) filtered = filtered.filter(c => c.kapanewon === kapanewonVal);
+  if (searchVal) filtered = filtered.filter(c => c.nama.toLowerCase().includes(searchVal));
+
+  const select = document.getElementById('lokasi');
+  const opts = ['<option value="">-- Pilih Perusahaan --</option>', '<option value="__NEW__">➕ Tambah Perusahaan Baru</option>'];
+  filtered.forEach(c => opts.push(`<option value="${escapeHtml(c.nama)}">${escapeHtml(c.nama)}</option>`));
+  select.innerHTML = opts.join('');
+}
+
+document.getElementById('kapanewonFilter').addEventListener('change', buildNamaOptions);
+document.getElementById('searchNama').addEventListener('input', buildNamaOptions);
+
+window.addEventListener('DOMContentLoaded', function () {
+  loadCompanyList();
 });
 
 document.getElementById('lokasi').addEventListener('change', function () {
@@ -250,7 +336,7 @@ document.getElementById('lokasi').addEventListener('change', function () {
 
 function loadCompanyDetail(nama) {
   setStatus('Memuat data...');
-  fetch(WEB_APP_URL + '?action=getCompanyDetail&nama=' + encodeURIComponent(nama))
+  fetch(ACTIVE_WEB_APP_URL + '?action=getCompanyDetail&nama=' + encodeURIComponent(nama))
     .then(res => res.json())
     .then(data => {
       if (!data.success) { setStatus('Gagal memuat: ' + data.error); return; }
@@ -284,6 +370,7 @@ function renderIdentitas(identity) {
   view.innerHTML = `
   <table class="form-table">
     <tr><td class="label-cell">Nama Perusahaan</td><td>${v('nama')}</td></tr>
+    <tr><td class="label-cell">Kapanewon/Kemantren</td><td>${v('kapanewon')}</td></tr>
     <tr><td class="label-cell">Alamat Perusahaan/Kantor</td><td>${v('alamatKantor')}</td></tr>
     <tr><td class="label-cell">Lokasi Sumur</td><td>${v('lokasiSumur')}</td></tr>
     <tr>
@@ -342,7 +429,7 @@ function renderHistori(monthly) {
 function hapusBulan(bulan) {
   if (!confirm('Yakin hapus data bulan ' + bulan + ' untuk ' + currentNama + '?')) return;
   setStatus('Menghapus...');
-  fetch(WEB_APP_URL, { method: 'POST', body: JSON.stringify({ action: 'deleteMonthEntry', nama: currentNama, bulan: bulan }) })
+  fetch(ACTIVE_WEB_APP_URL, { method: 'POST', body: JSON.stringify({ action: 'deleteMonthEntry', nama: currentNama, bulan: bulan }) })
     .then(res => res.json())
     .then(data => {
       if (data.success) { setStatus('✅ Data bulan ' + bulan + ' dihapus.'); loadCompanyDetail(currentNama); }
@@ -353,7 +440,7 @@ function hapusBulan(bulan) {
 
 document.getElementById('btnEditIdentitas').addEventListener('click', function () {
   const form = document.getElementById('editIdentitasForm');
-  fetch(WEB_APP_URL + '?action=getCompanyDetail&nama=' + encodeURIComponent(currentNama))
+  fetch(ACTIVE_WEB_APP_URL + '?action=getCompanyDetail&nama=' + encodeURIComponent(currentNama))
     .then(res => res.json())
     .then(data => {
       const identity = data.data.identity;
@@ -366,7 +453,7 @@ document.getElementById('btnEditIdentitas').addEventListener('click', function (
         const payload = { action: 'updateCompanyIdentity', namaLama: currentNama };
         Object.keys(IDENTITY_LABELS).forEach(key => { payload[key] = document.getElementById('edit_' + key).value; });
         setStatus('Menyimpan identitas...');
-        fetch(WEB_APP_URL, { method: 'POST', body: JSON.stringify(payload) })
+        fetch(ACTIVE_WEB_APP_URL, { method: 'POST', body: JSON.stringify(payload) })
           .then(res => res.json())
           .then(res => {
             if (res.success) {
@@ -384,7 +471,7 @@ document.getElementById('btnEditIdentitas').addEventListener('click', function (
 document.getElementById('btnExportPdf').addEventListener('click', function () {
   document.getElementById('pdfLinkArea').innerHTML = '';
   setStatus('Membuat PDF, tunggu sebentar (bisa 5-15 detik)...');
-  fetch(WEB_APP_URL, { method: 'POST', body: JSON.stringify({ action: 'exportSinglePDF', nama: currentNama }) })
+  fetch(ACTIVE_WEB_APP_URL, { method: 'POST', body: JSON.stringify({ action: 'exportSinglePDF', nama: currentNama }) })
     .then(res => res.json())
     .then(data => {
       if (data.success) {
@@ -401,7 +488,7 @@ document.getElementById('btnExportPdf').addEventListener('click', function () {
 document.getElementById('btnHapusPerusahaan').addEventListener('click', function () {
   if (!confirm('Yakin HAPUS SELURUH DATA perusahaan "' + currentNama + '"? Tindakan ini tidak bisa dibatalkan.')) return;
   setStatus('Menghapus perusahaan...');
-  fetch(WEB_APP_URL, { method: 'POST', body: JSON.stringify({ action: 'deleteCompany', nama: currentNama }) })
+  fetch(ACTIVE_WEB_APP_URL, { method: 'POST', body: JSON.stringify({ action: 'deleteCompany', nama: currentNama }) })
     .then(res => res.json())
     .then(data => {
       if (data.success) {
@@ -420,7 +507,7 @@ document.getElementById('btnSimpanBaru').addEventListener('click', function () {
   Object.keys(IDENTITY_LABELS).forEach(key => { payload[key] = document.getElementById('new_' + key).value; });
   if (!payload.nama) { setStatus('Nama perusahaan wajib diisi.'); return; }
   setStatus('Menyimpan perusahaan baru...');
-  fetch(WEB_APP_URL, { method: 'POST', body: JSON.stringify(payload) })
+  fetch(ACTIVE_WEB_APP_URL, { method: 'POST', body: JSON.stringify(payload) })
     .then(res => res.json())
     .then(data => {
       if (data.success) {
@@ -508,7 +595,7 @@ document.getElementById('btnSimpanBulan').addEventListener('click', function () 
   };
   if (!payload.wmAkhir) { setStatus('Isi WM Akhir dulu.'); return; }
   setStatus('Menyimpan data bulan ini...');
-  fetch(WEB_APP_URL, { method: 'POST', body: JSON.stringify(payload) })
+  fetch(ACTIVE_WEB_APP_URL, { method: 'POST', body: JSON.stringify(payload) })
     .then(res => res.json())
     .then(data => {
       if (data.success) {
@@ -526,16 +613,17 @@ document.getElementById('btnSimpanBulan').addEventListener('click', function () 
 });
 
 function refreshDropdown(selectValue) {
-  fetch(WEB_APP_URL + '?action=getCompanies')
+  fetch(ACTIVE_WEB_APP_URL + '?action=getCompanies')
     .then(res => res.json())
     .then(data => {
-      const select = document.getElementById('lokasi');
-      const opts = ['<option value="">-- Pilih Perusahaan --</option>', '<option value="__NEW__">➕ Tambah Perusahaan Baru</option>'];
-      if (data.success) {
-        data.data.forEach(nama => opts.push(`<option value="${escapeHtml(nama)}">${escapeHtml(nama)}</option>`));
+      allCompanies = data.success ? data.data : [];
+      buildKapanewonFilter();
+      buildNamaOptions();
+      if (selectValue) {
+        const select = document.getElementById('lokasi');
+        select.value = selectValue;
+        select.dispatchEvent(new Event('change'));
       }
-      select.innerHTML = opts.join('');
-      if (selectValue) { select.value = selectValue; select.dispatchEvent(new Event('change')); }
     });
 }
 
