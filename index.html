@@ -145,9 +145,9 @@
 <div id="kartuIdentitas" class="card hidden">
   <h3>Identitas Perusahaan</h3>
   <div id="viewIdentitas"></div>
-  <button class="btn-primary" id="btnEditIdentitas">✏️ Edit Identitas</button>
+  <button class="btn-primary" id="btnEditIdentitas" title="Edit Identitas">✏️</button>
   <button class="btn-primary" id="btnExportPdf">🖨️ Export PDF Kartu Ini</button>
-  <button class="btn-danger" id="btnHapusPerusahaan">🗑️ Hapus Perusahaan Ini</button>
+  <button class="btn-danger" id="btnHapusPerusahaan" title="Hapus Perusahaan Ini">🗑️</button>
   <div id="pdfLinkArea"></div>
 
   <div id="editIdentitasForm" class="hidden"></div>
@@ -177,7 +177,12 @@
   <textarea id="input_keterangan" rows="2" placeholder="cth: ada foto wm. Ada PDAM"></textarea>
 
   <label>Paraf Petugas (gambar pakai jari/mouse di kotak ini)</label>
-  <canvas id="parafCanvas" width="320" height="130" style="border:1px solid #999; touch-action:none; width:100%; max-width:320px; background:#fff; border-radius:6px; display:block;"></canvas>
+  <div style="position:relative; max-width:320px;">
+    <canvas id="parafCanvas" width="320" height="130" style="border:1px solid #999; touch-action:pan-y; width:100%; max-width:320px; background:#fff; border-radius:6px; display:block;"></canvas>
+    <div id="parafOverlay" style="position:absolute; inset:0; background:rgba(240,240,240,0.9); border-radius:6px; display:flex; align-items:center; justify-content:center; text-align:center; padding:8px;">
+      <button type="button" class="btn-primary" id="btnAktifkanParaf" style="margin:0;">🔓 Aktifkan untuk Tanda Tangan</button>
+    </div>
+  </div>
   <button type="button" class="btn-primary aksi-btn" id="btnClearParaf">🧹 Bersihkan Paraf</button>
 
   <button class="btn-success btn-block" id="btnSimpanBulan">✅ Simpan Bacaan Bulan Ini</button>
@@ -254,6 +259,8 @@ function loadCompanyDetail(nama) {
       document.getElementById('kartuIdentitas').classList.remove('hidden');
       document.getElementById('tabelBulanan').classList.remove('hidden');
       document.getElementById('formBulanIni').classList.remove('hidden');
+      if (typeof clearParafCanvas === 'function') clearParafCanvas();
+      if (typeof lockParaf === 'function') lockParaf();
       setStatus('');
     })
     .catch(err => setStatus('Error: ' + err.message));
@@ -313,7 +320,7 @@ function buildMonthBlock(monthlySlice) {
   const angkaRow = monthlySlice.map(m => `<td>${m.wmAkhir || '-'}</td>`).join('');
   const volumeRow = monthlySlice.map(m => `<td>${(m.volume !== '' && m.volume !== undefined) ? m.volume : '-'}</td>`).join('');
   const parafRow = monthlySlice.map(m => `<td>${m.paraf ? `<a class="link-foto" href="${m.paraf}" target="_blank">✅ Lihat</a>` : '-'}</td>`).join('');
-  const aksiRow = monthlySlice.map(m => `<td>${m.wmAkhir ? `<button class="btn-danger aksi-btn" onclick="hapusBulan('${m.bulan}')">Hapus</button>` : '-'}</td>`).join('');
+  const aksiRow = monthlySlice.map(m => `<td>${m.wmAkhir ? `<button class="btn-danger aksi-btn" title="Hapus data bulan ini" onclick="hapusBulan('${m.bulan}')">🗑️</button>` : '-'}</td>`).join('');
 
   return `
   <table class="month-table">
@@ -441,11 +448,27 @@ document.getElementById('input_foto').addEventListener('change', function (e) {
 // ---- Paraf digital (gambar tangan di canvas) ----
 const parafCanvas = document.getElementById('parafCanvas');
 const parafCtx = parafCanvas.getContext('2d');
+const parafOverlay = document.getElementById('parafOverlay');
 parafCtx.lineWidth = 2.5;
 parafCtx.lineCap = 'round';
 parafCtx.strokeStyle = '#000';
 let isDrawingParaf = false;
 let hasParaf = false;
+let parafActive = false;
+
+function unlockParaf() {
+  parafActive = true;
+  parafOverlay.style.display = 'none';
+  parafCanvas.style.touchAction = 'none'; // matikan scroll browser saat aktif nulis
+  parafCanvas.style.borderColor = '#1a73e8';
+}
+function lockParaf() {
+  parafActive = false;
+  parafOverlay.style.display = 'flex';
+  parafCanvas.style.touchAction = 'pan-y'; // biar bisa scroll normal saat tidak aktif
+  parafCanvas.style.borderColor = '#999';
+}
+document.getElementById('btnAktifkanParaf').addEventListener('click', unlockParaf);
 
 function getParafPos(e) {
   const rect = parafCanvas.getBoundingClientRect();
@@ -455,8 +478,8 @@ function getParafPos(e) {
   const clientY = e.touches ? e.touches[0].clientY : e.clientY;
   return { x: (clientX - rect.left) * scaleX, y: (clientY - rect.top) * scaleY };
 }
-function startParaf(e) { isDrawingParaf = true; hasParaf = true; const p = getParafPos(e); parafCtx.beginPath(); parafCtx.moveTo(p.x, p.y); e.preventDefault(); }
-function moveParaf(e) { if (!isDrawingParaf) return; const p = getParafPos(e); parafCtx.lineTo(p.x, p.y); parafCtx.stroke(); e.preventDefault(); }
+function startParaf(e) { if (!parafActive) return; isDrawingParaf = true; hasParaf = true; const p = getParafPos(e); parafCtx.beginPath(); parafCtx.moveTo(p.x, p.y); e.preventDefault(); }
+function moveParaf(e) { if (!parafActive || !isDrawingParaf) return; const p = getParafPos(e); parafCtx.lineTo(p.x, p.y); parafCtx.stroke(); e.preventDefault(); }
 function endParaf() { isDrawingParaf = false; }
 
 parafCanvas.addEventListener('mousedown', startParaf);
@@ -495,6 +518,7 @@ document.getElementById('btnSimpanBulan').addEventListener('click', function () 
         document.getElementById('preview').style.display = 'none';
         base64Image = '';
         clearParafCanvas();
+        lockParaf();
         loadCompanyDetail(currentNama);
       } else setStatus('Gagal: ' + data.error);
     })
