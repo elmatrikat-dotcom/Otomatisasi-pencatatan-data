@@ -407,7 +407,8 @@ function buildMonthBlock(monthlySlice) {
   const angkaRow = monthlySlice.map(m => `<td>${m.wmAkhir || '-'}</td>`).join('');
   const volumeRow = monthlySlice.map(m => `<td>${(m.volume !== '' && m.volume !== undefined) ? m.volume : '-'}</td>`).join('');
   const parafRow = monthlySlice.map(m => `<td>${m.paraf ? `<a class="link-foto" href="${m.paraf}" target="_blank">✅ Lihat</a>` : '-'}</td>`).join('');
-  const aksiRow = monthlySlice.map(m => `<td>${m.wmAkhir ? `<button class="btn-danger aksi-btn" title="Hapus data bulan ini" onclick="hapusBulan('${m.bulan}')">🗑️</button>` : '-'}</td>`).join('');
+  const adaData = m => (m.wmAkhir !== '' && m.wmAkhir !== undefined && m.wmAkhir !== null) || (m.volume !== '' && m.volume !== undefined && m.volume !== null);
+  const aksiRow = monthlySlice.map(m => `<td>${adaData(m) ? `<button class="btn-danger aksi-btn" title="Hapus data bulan ini" onclick="hapusBulan('${m.bulan}')">🗑️</button>` : '-'}</td>`).join('');
 
   return `
   <table class="month-table">
