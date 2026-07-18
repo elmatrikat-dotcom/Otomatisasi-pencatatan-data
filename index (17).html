@@ -1,0 +1,734 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Kartu Pencatatan Air Tanah</title>
+<style>
+  body { font-family: sans-serif; max-width: 720px; margin: 0 auto; padding: 16px; background:#f5f5f5; }
+  h2 { text-align:center; }
+  h3 { border-bottom:2px solid #1a73e8; padding-bottom:4px; margin-top:24px; }
+  label { display:block; margin-top:10px; font-weight:600; font-size:14px; }
+  input, textarea, select { width:100%; padding:7px; margin-top:3px; box-sizing:border-box; font-size:14px; }
+  button { margin-top:10px; padding:10px 14px; font-size:14px; border:none; border-radius:6px; cursor:pointer; }
+  .btn-primary { background:#1a73e8; color:#fff; }
+  .btn-success { background:#188038; color:#fff; }
+  .btn-danger { background:#d93025; color:#fff; }
+  .btn-block { width:100%; }
+  .card { background:#fff; border:1px solid #ddd; border-radius:8px; padding:16px; margin-top:16px; }
+  .row2 { display:flex; gap:10px; }
+  .row2 > div { flex:1; }
+  table { width:100%; border-collapse: collapse; margin-top:8px; font-size:13px; }
+  th, td { border:1px solid #ddd; padding:6px; text-align:left; }
+  th { background:#f0f0f0; }
+  .hidden { display:none; }
+  #status { margin-top:10px; font-size:14px; color:#555; min-height:20px; }
+  .link-foto { font-size:12px; }
+  .aksi-btn { padding:4px 8px; font-size:12px; margin:2px; }
+  #preview { max-width:100%; margin-top:8px; border-radius:6px; display:none; }
+
+  /* ===== Gaya kartu formulir (mirip kertas fisik) ===== */
+  .form-table { width:100%; border-collapse:collapse; font-size:13px; margin-top:8px; }
+  .form-table td { border:1px solid #333; padding:7px 9px; vertical-align:top; }
+  .form-table .label-cell { background:#eef1f6; font-weight:700; width:34%; font-size:12px; text-transform:uppercase; letter-spacing:0.3px; }
+  .form-table .split-cell { padding:0; }
+  .form-table .split-cell > div { display:flex; }
+  .form-table .split-cell > div > span { flex:1; padding:7px 9px; border-right:1px solid #333; }
+  .form-table .split-cell > div > span:last-child { border-right:none; }
+  .checkbox-group span { display:inline-block; margin-right:16px; }
+  .checkbox-group .box { display:inline-block; width:14px; height:14px; border:1.5px solid #333; margin-right:4px; text-align:center; line-height:12px; font-size:11px; vertical-align:middle; }
+  .checkbox-group .checked .box { background:#1a73e8; color:#fff; font-weight:700; }
+  .checkbox-group .checked { font-weight:700; }
+
+  .month-table { width:100%; border-collapse:collapse; font-size:12px; margin-top:10px; table-layout:fixed; }
+  .month-table th, .month-table td { border:1px solid #333; padding:6px 4px; text-align:center; word-break:break-word; }
+  .month-table th { background:#dbe5f5; text-transform:uppercase; font-size:11px; }
+  .month-table .row-label { background:#eef1f6; font-weight:700; text-align:left; text-transform:uppercase; font-size:11px; width:120px; }
+  .month-table td.keterangan-cell { font-size:11px; text-align:left; }
+</style>
+</head>
+<body>
+
+<h2>📋 Kartu Pencatatan Volume Air Tanah</h2>
+
+<label>Pilih Kabupaten/Kota</label>
+<select id="kabupatenSelect"></select>
+
+<label>Pilih Kapanewon/Kemantren</label>
+<select id="kapanewonFilter">
+  <option value="">-- Semua Kapanewon --</option>
+</select>
+
+<label>Cari Nama Perusahaan</label>
+<input type="text" id="searchNama" placeholder="Ketik untuk mencari...">
+
+<label>Pilih Perusahaan</label>
+<select id="lokasi">
+  <option value="">-- Memuat daftar... --</option>
+  <option value="__NEW__">➕ Tambah Perusahaan Baru</option>
+</select>
+
+<div id="status"></div>
+
+<!-- ==================== FORM PERUSAHAAN BARU ==================== -->
+<div id="formBaru" class="card hidden">
+  <h3>Tambah Perusahaan Baru</h3>
+
+  <label>Nama Perusahaan</label>
+  <input type="text" id="new_nama">
+
+  <label>Alamat Perusahaan/Kantor</label>
+  <textarea id="new_alamatKantor" rows="2"></textarea>
+
+  <label>Lokasi Sumur</label>
+  <textarea id="new_lokasiSumur" rows="2"></textarea>
+
+  <div class="row2">
+    <div><label>Koordinat Y</label><input type="text" id="new_koordinatY"></div>
+    <div><label>Koordinat X</label><input type="text" id="new_koordinatX"></div>
+  </div>
+
+  <div class="row2">
+    <div><label>No Izin SIPA</label><input type="text" id="new_noIzinSipa"></div>
+    <div><label>No Registrasi Sumur</label><input type="text" id="new_noRegistrasiSumur"></div>
+  </div>
+
+  <div class="row2">
+    <div><label>Tgl Izin</label><input type="text" id="new_tglIzin" placeholder="cth: 06 Agustus 2025"></div>
+    <div><label>Berlaku</label><input type="text" id="new_berlaku" placeholder="cth: 5 Tahun"></div>
+  </div>
+
+  <label>Tgl Akhir Izin</label>
+  <input type="text" id="new_tglAkhirIzin">
+
+  <label>Kedalaman Sumur</label>
+  <input type="text" id="new_kedalamanSumur" placeholder="cth: 10 Meter">
+
+  <div class="row2">
+    <div><label>Debit Izin Pemrakarsa Harian (m³/hari)</label><input type="text" id="new_debitPemrakarsaHarian"></div>
+    <div><label>Debit Izin Pemrakarsa Bulanan (m³/bulan)</label><input type="text" id="new_debitPemrakarsaBulanan"></div>
+  </div>
+  <div class="row2">
+    <div><label>Debit Izin Masyarakat Harian (m³/hari)</label><input type="text" id="new_debitMasyarakatHarian"></div>
+    <div><label>Debit Izin Masyarakat Bulanan (m³/bulan)</label><input type="text" id="new_debitMasyarakatBulanan"></div>
+  </div>
+
+  <div class="row2">
+    <div>
+      <label>Jenis Sumur</label>
+      <select id="new_jenisSumur"><option value="">--</option><option>Sumur Bor</option><option>Sumur Gali/Pantek/Pasak</option></select>
+    </div>
+    <div>
+      <label>Meteran</label>
+      <select id="new_meteran"><option value="">--</option><option>WM</option><option>Non WM</option></select>
+    </div>
+  </div>
+
+  <div class="row2">
+    <div>
+      <label>Status Izin</label>
+      <select id="new_statusIzin"><option value="">--</option><option>Izin</option><option>Non Izin</option></select>
+    </div>
+    <div>
+      <label>Status Bangun Sumur</label>
+      <select id="new_statusBangunSumur"><option value="">--</option><option>Sudah Membangun Sumur</option><option>Belum/Proses Membangun Sumur</option></select>
+    </div>
+  </div>
+
+  <label>Kategori Izin</label>
+  <select id="new_kategoriIzin">
+    <option value="">--</option>
+    <option>IZIN PENGUSAHAAN AIR TANAH (PENATAAN)</option>
+    <option>PERPANJANGAN PERSETUJUAN PENGGUNAAN AIR TANAH (PERPANJANGAN IZIN PEMDA DIY)</option>
+    <option>IZIN PENGUSAHAAN AIR TANAH BARU</option>
+    <option>PERPANJANGAN IZIN PENGUSAHAAN AIR TANAH</option>
+    <option>PERSETUJUAN PENGGUNAAN AIR TANAH BARU</option>
+    <option>PERSETUJUAN PENGGUNAAN AIR TANAH (PENATAAN)</option>
+  </select>
+
+  <label>Keterangan Sumur</label>
+  <textarea id="new_keteranganSumur" rows="2"></textarea>
+
+  <label>Kapanewon/Kemantren</label>
+  <input type="text" id="new_kapanewon" placeholder="cth: Banguntapan">
+
+  <label>Nama Petugas Pencatat</label>
+  <input type="text" id="new_namaPetugas" placeholder="cth: Budi Santoso">
+
+  <label>NIP Petugas Pencatat</label>
+  <input type="text" id="new_nipPetugas" placeholder="cth: 197001012000011001">
+
+  <button class="btn-success btn-block" id="btnSimpanBaru">✅ Simpan Perusahaan Baru</button>
+</div>
+
+<!-- ==================== KARTU IDENTITAS (perusahaan terpilih) ==================== -->
+<div id="kartuIdentitas" class="card hidden">
+  <h3>Identitas Perusahaan</h3>
+  <div id="viewIdentitas"></div>
+  <button class="btn-primary" id="btnEditIdentitas" title="Edit Identitas">✏️</button>
+  <button class="btn-primary" id="btnExportPdf">🖨️ Export PDF Kartu Ini</button>
+  <button class="btn-danger" id="btnHapusPerusahaan" title="Hapus Perusahaan Ini">🗑️</button>
+  <div id="pdfLinkArea"></div>
+
+  <div id="editIdentitasForm" class="hidden"></div>
+
+  <h3>TTD Petugas Pencatat Tetap</h3>
+  <div id="ttdInfo" style="font-size:13px; margin-bottom:6px;"></div>
+  <div style="position:relative; max-width:320px;">
+    <canvas id="ttdCanvas" width="320" height="130" style="border:1px solid #999; touch-action:pan-y; width:100%; max-width:320px; background:#fff; border-radius:6px; display:block;"></canvas>
+    <div id="ttdOverlay" style="position:absolute; inset:0; background:rgba(240,240,240,0.9); border-radius:6px; display:flex; align-items:center; justify-content:center; text-align:center; padding:8px;">
+      <button type="button" class="btn-primary" id="btnAktifkanTtd" style="margin:0;">🔓 Aktifkan untuk Gambar TTD</button>
+    </div>
+  </div>
+  <button type="button" class="btn-primary aksi-btn" id="btnClearTtd">🧹 Bersihkan</button>
+  <button type="button" class="btn-success aksi-btn" id="btnSimpanTtd">💾 Simpan TTD Tetap</button>
+</div>
+
+<!-- ==================== TABEL 12 BULAN (gaya kertas MATRIKS) ==================== -->
+<div id="tabelBulanan" class="card hidden">
+  <h3>Histori Bacaan Meteran (Tahun Berjalan)</h3>
+  <div id="tabelHistoriWrap" style="overflow-x:auto;"></div>
+</div>
+
+<!-- ==================== FORM INPUT BULAN INI ==================== -->
+<div id="formBulanIni" class="card hidden">
+  <h3>Input / Update Bacaan Bulan Ini</h3>
+
+  <label>Bulan</label>
+  <select id="input_bulan"></select>
+
+  <label>Foto Meteran</label>
+  <input type="file" id="input_foto" accept="image/*">
+  <img id="preview" alt="preview">
+
+  <label>WM Akhir (lihat foto, isi manual)</label>
+  <input type="text" id="input_wmAkhir" placeholder="cth: 123456">
+
+  <label>Keterangan</label>
+  <textarea id="input_keterangan" rows="2" placeholder="cth: ada foto wm. Ada PDAM"></textarea>
+
+  <label>Paraf Petugas (gambar pakai jari/mouse di kotak ini)</label>
+  <div style="position:relative; max-width:320px;">
+    <canvas id="parafCanvas" width="320" height="130" style="border:1px solid #999; touch-action:pan-y; width:100%; max-width:320px; background:#fff; border-radius:6px; display:block;"></canvas>
+    <div id="parafOverlay" style="position:absolute; inset:0; background:rgba(240,240,240,0.9); border-radius:6px; display:flex; align-items:center; justify-content:center; text-align:center; padding:8px;">
+      <button type="button" class="btn-primary" id="btnAktifkanParaf" style="margin:0;">🔓 Aktifkan untuk Tanda Tangan</button>
+    </div>
+  </div>
+  <button type="button" class="btn-primary aksi-btn" id="btnClearParaf">🧹 Bersihkan Paraf</button>
+
+  <button class="btn-success btn-block" id="btnSimpanBulan">✅ Simpan Bacaan Bulan Ini</button>
+</div>
+
+<script>
+// Konfigurasi per kabupaten/kota DIY. Setiap kabupaten = 1 spreadsheet + 1 Web App URL terpisah.
+// "active: false" berarti belum ada datanya -> muncul di dropdown tapi disabled (nonaktif).
+const KABUPATEN_CONFIG = {
+  bantul: {
+    label: 'Kabupaten Bantul',
+    url: 'https://script.google.com/macros/s/AKfycbwilCg4J3qe__qit8s9oj2bU1fqe8Wal3DGfMVzQJlUwyGLtVI6MXpQV4ivkinuRxbdOg/exec',
+    active: true
+  },
+  sleman: { label: 'Kabupaten Sleman', url: '', active: false },
+  gunungkidul: { label: 'Kabupaten Gunungkidul', url: '', active: false },
+  kulonprogo: { label: 'Kabupaten Kulon Progo', url: '', active: false },
+  kotayogyakarta: { label: 'Kota Yogyakarta', url: '', active: false }
+};
+
+let ACTIVE_WEB_APP_URL = KABUPATEN_CONFIG.bantul.url;
+let allCompanies = []; // [{nama, kapanewon}] hasil getCompanies dari kabupaten yang aktif
+
+const MONTHS = ['Januari','Februari','Maret','April','Mei','Juni','Juli','Agustus','September','Oktober','November','Desember'];
+
+const IDENTITY_LABELS = {
+  nama: 'Nama', alamatKantor: 'Alamat Perusahaan/Kantor', lokasiSumur: 'Lokasi Sumur',
+  koordinatY: 'Koordinat Y', koordinatX: 'Koordinat X',
+  noIzinSipa: 'No Izin SIPA', tglIzin: 'Tgl Izin', berlaku: 'Berlaku', tglAkhirIzin: 'Tgl Akhir Izin',
+  noRegistrasiSumur: 'No Registrasi Sumur', kedalamanSumur: 'Kedalaman Sumur',
+  debitPemrakarsaHarian: 'Debit Izin Pemrakarsa Harian (m³/hari)',
+  debitPemrakarsaBulanan: 'Debit Izin Pemrakarsa Bulanan (m³/bulan)',
+  debitMasyarakatHarian: 'Debit Izin Masyarakat Harian (m³/hari)',
+  debitMasyarakatBulanan: 'Debit Izin Masyarakat Bulanan (m³/bulan)',
+  jenisSumur: 'Jenis Sumur', meteran: 'Meteran', statusIzin: 'Status Izin',
+  kategoriIzin: 'Kategori Izin', statusBangunSumur: 'Status Bangun Sumur', keteranganSumur: 'Keterangan Sumur',
+  kapanewon: 'Kapanewon/Kemantren', namaPetugas: 'Nama Petugas Pencatat', nipPetugas: 'NIP Petugas Pencatat'
+};
+
+let base64Image = '';
+let currentNama = '';
+
+function setStatus(msg) { document.getElementById('status').innerText = msg; }
+
+(function initMonthSelect() {
+  const sel = document.getElementById('input_bulan');
+  MONTHS.forEach(m => { const o = document.createElement('option'); o.value = m; o.textContent = m; sel.appendChild(o); });
+  sel.value = MONTHS[new Date().getMonth()];
+})();
+
+// ---- Dropdown Kabupaten ----
+(function initKabupatenSelect() {
+  const sel = document.getElementById('kabupatenSelect');
+  sel.innerHTML = Object.keys(KABUPATEN_CONFIG).map(key => {
+    const k = KABUPATEN_CONFIG[key];
+    const disabledAttr = k.active ? '' : 'disabled';
+    const labelText = k.active ? k.label : k.label + ' (segera hadir)';
+    return `<option value="${key}" ${disabledAttr}>${labelText}</option>`;
+  }).join('');
+  sel.value = 'bantul';
+})();
+
+document.getElementById('kabupatenSelect').addEventListener('change', function () {
+  const cfg = KABUPATEN_CONFIG[this.value];
+  if (!cfg || !cfg.active) { setStatus('Data kabupaten ini belum tersedia.'); return; }
+  ACTIVE_WEB_APP_URL = cfg.url;
+  resetToCompanyList();
+});
+
+function resetToCompanyList() {
+  document.getElementById('formBaru').classList.add('hidden');
+  document.getElementById('kartuIdentitas').classList.add('hidden');
+  document.getElementById('tabelBulanan').classList.add('hidden');
+  document.getElementById('formBulanIni').classList.add('hidden');
+  loadCompanyList();
+}
+
+function loadCompanyList() {
+  setStatus('Memuat daftar perusahaan...');
+  fetch(ACTIVE_WEB_APP_URL + '?action=getCompanies')
+    .then(res => res.json())
+    .then(data => {
+      allCompanies = data.success ? data.data : [];
+      buildKapanewonFilter();
+      buildNamaOptions();
+      setStatus('');
+    })
+    .catch(() => setStatus('Gagal memuat daftar perusahaan.'));
+}
+
+function buildKapanewonFilter() {
+  const sel = document.getElementById('kapanewonFilter');
+  const unique = [...new Set(allCompanies.map(c => c.kapanewon).filter(k => k))].sort();
+  sel.innerHTML = '<option value="">-- Semua Kapanewon --</option>' +
+    unique.map(k => `<option value="${escapeHtml(k)}">${escapeHtml(k)}</option>`).join('');
+}
+
+// Bangun ulang opsi dropdown Nama berdasarkan filter Kapanewon + kata kunci pencarian
+function buildNamaOptions() {
+  const kapanewonVal = document.getElementById('kapanewonFilter').value;
+  const searchVal = document.getElementById('searchNama').value.trim().toLowerCase();
+
+  let filtered = allCompanies;
+  if (kapanewonVal) filtered = filtered.filter(c => c.kapanewon === kapanewonVal);
+  if (searchVal) filtered = filtered.filter(c => c.nama.toLowerCase().includes(searchVal));
+
+  const select = document.getElementById('lokasi');
+  const opts = ['<option value="">-- Pilih Perusahaan --</option>', '<option value="__NEW__">➕ Tambah Perusahaan Baru</option>'];
+  filtered.forEach(c => opts.push(`<option value="${escapeHtml(c.nama)}">${escapeHtml(c.nama)}</option>`));
+  select.innerHTML = opts.join('');
+}
+
+document.getElementById('kapanewonFilter').addEventListener('change', buildNamaOptions);
+document.getElementById('searchNama').addEventListener('input', buildNamaOptions);
+
+window.addEventListener('DOMContentLoaded', function () {
+  loadCompanyList();
+});
+
+document.getElementById('lokasi').addEventListener('change', function () {
+  const val = this.value;
+  document.getElementById('formBaru').classList.add('hidden');
+  document.getElementById('kartuIdentitas').classList.add('hidden');
+  document.getElementById('tabelBulanan').classList.add('hidden');
+  document.getElementById('formBulanIni').classList.add('hidden');
+  setStatus('');
+
+  if (val === '__NEW__') {
+    document.getElementById('formBaru').classList.remove('hidden');
+    return;
+  }
+  if (val) {
+    currentNama = val;
+    loadCompanyDetail(val);
+  }
+});
+
+function loadCompanyDetail(nama) {
+  setStatus('Memuat data...');
+  fetch(ACTIVE_WEB_APP_URL + '?action=getCompanyDetail&nama=' + encodeURIComponent(nama))
+    .then(res => res.json())
+    .then(data => {
+      if (!data.success) { setStatus('Gagal memuat: ' + data.error); return; }
+      renderIdentitas(data.data.identity);
+      renderHistori(data.data.monthly);
+      document.getElementById('kartuIdentitas').classList.remove('hidden');
+      document.getElementById('tabelBulanan').classList.remove('hidden');
+      document.getElementById('formBulanIni').classList.remove('hidden');
+      if (typeof clearParafCanvas === 'function') clearParafCanvas();
+      if (typeof lockParaf === 'function') lockParaf();
+      if (typeof clearTtdCanvas === 'function') clearTtdCanvas();
+      if (typeof lockTtd === 'function') lockTtd();
+      const ttdInfo = document.getElementById('ttdInfo');
+      if (ttdInfo) {
+        ttdInfo.innerHTML = data.data.identity.ttdPetugas
+          ? `✅ TTD tersimpan — <a href="${data.data.identity.ttdPetugas}" target="_blank">Lihat</a>`
+          : 'Belum ada TTD tersimpan untuk perusahaan ini.';
+      }
+      setStatus('');
+    })
+    .catch(err => setStatus('Error: ' + err.message));
+}
+
+function checkboxRow(value, optionA, optionB) {
+  const isA = value === optionA;
+  const isB = value === optionB;
+  return `<div class="checkbox-group">
+    <span class="${isA ? 'checked' : ''}"><span class="box">${isA ? '✓' : ''}</span>${optionA}</span>
+    <span class="${isB ? 'checked' : ''}"><span class="box">${isB ? '✓' : ''}</span>${optionB}</span>
+  </div>`;
+}
+
+function renderIdentitas(identity) {
+  const view = document.getElementById('viewIdentitas');
+  const pdfArea = document.getElementById('pdfLinkArea');
+  if (pdfArea) pdfArea.innerHTML = '';
+  const v = key => escapeHtml(identity[key] || '-');
+
+  view.innerHTML = `
+  <table class="form-table">
+    <tr><td class="label-cell">Nama Perusahaan</td><td>${v('nama')}</td></tr>
+    <tr><td class="label-cell">Kapanewon/Kemantren</td><td>${v('kapanewon')}</td></tr>
+    <tr><td class="label-cell">Alamat Perusahaan/Kantor</td><td>${v('alamatKantor')}</td></tr>
+    <tr><td class="label-cell">Lokasi Sumur</td><td>${v('lokasiSumur')}</td></tr>
+    <tr>
+      <td class="label-cell">Koordinat</td>
+      <td class="split-cell"><div><span><strong>X:</strong> ${v('koordinatX')}</span><span><strong>Y:</strong> ${v('koordinatY')}</span></div></td>
+    </tr>
+    <tr><td class="label-cell">Status Izin</td><td>${checkboxRow(identity.statusIzin, 'Izin', 'Non Izin')}</td></tr>
+    <tr><td class="label-cell">Jenis Pengambilan</td><td>${checkboxRow(identity.jenisSumur, 'Sumur Bor', 'Sumur Gali/Pantek/Pasak')}</td></tr>
+    <tr><td class="label-cell">Watermeter</td><td>${checkboxRow(identity.meteran, 'WM', 'Non WM')}</td></tr>
+    <tr><td class="label-cell">Kedalaman Sumur</td><td>${v('kedalamanSumur')}</td></tr>
+    <tr><td class="label-cell">No Izin SIPA</td><td>${v('noIzinSipa')}</td></tr>
+    <tr>
+      <td class="label-cell">Tgl Izin / Berlaku</td>
+      <td class="split-cell"><div><span>${v('tglIzin')}</span><span>${v('berlaku')}</span></div></td>
+    </tr>
+    <tr><td class="label-cell">Tgl Akhir Izin</td><td>${v('tglAkhirIzin')}</td></tr>
+    <tr><td class="label-cell">No Registrasi Sumur</td><td>${v('noRegistrasiSumur')}</td></tr>
+    <tr>
+      <td class="label-cell">Debit Izin Pemrakarsa</td>
+      <td class="split-cell"><div><span><strong>Harian:</strong> ${v('debitPemrakarsaHarian')} m³</span><span><strong>Bulanan:</strong> ${v('debitPemrakarsaBulanan')} m³</span></div></td>
+    </tr>
+    <tr>
+      <td class="label-cell">Debit Izin Masyarakat</td>
+      <td class="split-cell"><div><span><strong>Harian:</strong> ${v('debitMasyarakatHarian')} m³</span><span><strong>Bulanan:</strong> ${v('debitMasyarakatBulanan')} m³</span></div></td>
+    </tr>
+  </table>`;
+
+  document.getElementById('editIdentitasForm').classList.add('hidden');
+  document.getElementById('editIdentitasForm').innerHTML = '';
+}
+
+function buildMonthBlock(monthlySlice) {
+  const th = monthlySlice.map(m => `<th>${m.bulan}</th>`).join('');
+  const angkaRow = monthlySlice.map(m => `<td>${m.wmAkhir || '-'}</td>`).join('');
+  const volumeRow = monthlySlice.map(m => `<td>${(m.volume !== '' && m.volume !== undefined) ? m.volume : '-'}</td>`).join('');
+  const parafRow = monthlySlice.map(m => `<td>${m.paraf ? `<a class="link-foto" href="${m.paraf}" target="_blank">✅ Lihat</a>` : '-'}</td>`).join('');
+  const adaData = m => (m.wmAkhir !== '' && m.wmAkhir !== undefined && m.wmAkhir !== null) || (m.volume !== '' && m.volume !== undefined && m.volume !== null);
+  const aksiRow = monthlySlice.map(m => `<td>${adaData(m) ? `<button class="btn-danger aksi-btn" title="Hapus data bulan ini" onclick="hapusBulan('${m.bulan}')">🗑️</button>` : '-'}</td>`).join('');
+
+  return `
+  <table class="month-table">
+    <tr><th class="row-label">Bulan</th>${th}</tr>
+    <tr><td class="row-label">Angka Meter Air</td>${angkaRow}</tr>
+    <tr><td class="row-label">Volume Pemakaian (m³)</td>${volumeRow}</tr>
+    <tr><td class="row-label">Paraf Petugas</td>${parafRow}</tr>
+    <tr><td class="row-label">Aksi</td>${aksiRow}</tr>
+  </table>`;
+}
+
+function renderHistori(monthly) {
+  const wrap = document.getElementById('tabelHistoriWrap');
+  const firstHalf = monthly.slice(0, 6);   // Januari - Juni
+  const secondHalf = monthly.slice(6, 12); // Juli - Desember
+  wrap.innerHTML = buildMonthBlock(firstHalf) + buildMonthBlock(secondHalf);
+}
+
+function hapusBulan(bulan) {
+  if (!confirm('Yakin hapus data bulan ' + bulan + ' untuk ' + currentNama + '?')) return;
+  setStatus('Menghapus...');
+  fetch(ACTIVE_WEB_APP_URL, { method: 'POST', body: JSON.stringify({ action: 'deleteMonthEntry', nama: currentNama, bulan: bulan }) })
+    .then(res => res.json())
+    .then(data => {
+      if (data.success) { setStatus('✅ Data bulan ' + bulan + ' dihapus.'); loadCompanyDetail(currentNama); }
+      else setStatus('Gagal hapus: ' + data.error);
+    })
+    .catch(err => setStatus('Error: ' + err.message));
+}
+
+document.getElementById('btnEditIdentitas').addEventListener('click', function () {
+  const form = document.getElementById('editIdentitasForm');
+  fetch(ACTIVE_WEB_APP_URL + '?action=getCompanyDetail&nama=' + encodeURIComponent(currentNama))
+    .then(res => res.json())
+    .then(data => {
+      const identity = data.data.identity;
+      form.innerHTML = Object.keys(IDENTITY_LABELS).map(key =>
+        `<label>${IDENTITY_LABELS[key]}</label><input type="text" id="edit_${key}" value="${escapeHtml(identity[key] || '')}">`
+      ).join('') + '<button class="btn-success btn-block" id="btnSimpanEditIdentitas">💾 Simpan Perubahan Identitas</button>';
+      form.classList.remove('hidden');
+
+      document.getElementById('btnSimpanEditIdentitas').addEventListener('click', function () {
+        const payload = { action: 'updateCompanyIdentity', namaLama: currentNama };
+        Object.keys(IDENTITY_LABELS).forEach(key => { payload[key] = document.getElementById('edit_' + key).value; });
+        setStatus('Menyimpan identitas...');
+        fetch(ACTIVE_WEB_APP_URL, { method: 'POST', body: JSON.stringify(payload) })
+          .then(res => res.json())
+          .then(res => {
+            if (res.success) {
+              setStatus('✅ Identitas diupdate.');
+              currentNama = payload.nama || currentNama;
+              loadCompanyDetail(currentNama);
+              refreshDropdown(currentNama);
+            } else setStatus('Gagal: ' + res.error);
+          })
+          .catch(err => setStatus('Error: ' + err.message));
+      });
+    });
+});
+
+document.getElementById('btnExportPdf').addEventListener('click', function () {
+  document.getElementById('pdfLinkArea').innerHTML = '';
+  setStatus('Membuat PDF, tunggu sebentar (bisa 5-15 detik)...');
+  fetch(ACTIVE_WEB_APP_URL, { method: 'POST', body: JSON.stringify({ action: 'exportSinglePDF', nama: currentNama }) })
+    .then(res => res.json())
+    .then(data => {
+      if (data.success) {
+        setStatus('✅ PDF berhasil dibuat.');
+        document.getElementById('pdfLinkArea').innerHTML =
+          `<div style="margin-top:8px;"><a href="${data.result.url}" target="_blank" style="font-weight:700; color:#1a73e8;">📄 Buka / Download PDF Hasil Export</a></div>`;
+      } else {
+        setStatus('Gagal export: ' + data.error);
+      }
+    })
+    .catch(err => setStatus('Error: ' + err.message));
+});
+
+document.getElementById('btnHapusPerusahaan').addEventListener('click', function () {
+  if (!confirm('Yakin HAPUS SELURUH DATA perusahaan "' + currentNama + '"? Tindakan ini tidak bisa dibatalkan.')) return;
+  setStatus('Menghapus perusahaan...');
+  fetch(ACTIVE_WEB_APP_URL, { method: 'POST', body: JSON.stringify({ action: 'deleteCompany', nama: currentNama }) })
+    .then(res => res.json())
+    .then(data => {
+      if (data.success) {
+        setStatus('✅ Perusahaan dihapus.');
+        document.getElementById('kartuIdentitas').classList.add('hidden');
+        document.getElementById('tabelBulanan').classList.add('hidden');
+        document.getElementById('formBulanIni').classList.add('hidden');
+        refreshDropdown('');
+      } else setStatus('Gagal: ' + data.error);
+    })
+    .catch(err => setStatus('Error: ' + err.message));
+});
+
+document.getElementById('btnSimpanBaru').addEventListener('click', function () {
+  const payload = { action: 'createCompany' };
+  Object.keys(IDENTITY_LABELS).forEach(key => { payload[key] = document.getElementById('new_' + key).value; });
+  if (!payload.nama) { setStatus('Nama perusahaan wajib diisi.'); return; }
+  setStatus('Menyimpan perusahaan baru...');
+  fetch(ACTIVE_WEB_APP_URL, { method: 'POST', body: JSON.stringify(payload) })
+    .then(res => res.json())
+    .then(data => {
+      if (data.success) {
+        setStatus('✅ Perusahaan baru ditambahkan.');
+        document.getElementById('formBaru').classList.add('hidden');
+        refreshDropdown(payload.nama);
+      } else setStatus('Gagal: ' + data.error);
+    })
+    .catch(err => setStatus('Error: ' + err.message));
+});
+
+document.getElementById('input_foto').addEventListener('change', function (e) {
+  const file = e.target.files[0];
+  if (!file) return;
+  const reader = new FileReader();
+  reader.onload = function (evt) {
+    base64Image = evt.target.result.split(',')[1];
+    const preview = document.getElementById('preview');
+    preview.src = evt.target.result;
+    preview.style.display = 'block';
+  };
+  reader.readAsDataURL(file);
+});
+
+// ---- Paraf digital (gambar tangan di canvas) ----
+const parafCanvas = document.getElementById('parafCanvas');
+const parafCtx = parafCanvas.getContext('2d');
+const parafOverlay = document.getElementById('parafOverlay');
+parafCtx.lineWidth = 2.5;
+parafCtx.lineCap = 'round';
+parafCtx.strokeStyle = '#000';
+let isDrawingParaf = false;
+let hasParaf = false;
+let parafActive = false;
+
+function unlockParaf() {
+  parafActive = true;
+  parafOverlay.style.display = 'none';
+  parafCanvas.style.touchAction = 'none'; // matikan scroll browser saat aktif nulis
+  parafCanvas.style.borderColor = '#1a73e8';
+}
+function lockParaf() {
+  parafActive = false;
+  parafOverlay.style.display = 'flex';
+  parafCanvas.style.touchAction = 'pan-y'; // biar bisa scroll normal saat tidak aktif
+  parafCanvas.style.borderColor = '#999';
+}
+document.getElementById('btnAktifkanParaf').addEventListener('click', unlockParaf);
+
+function getParafPos(e) {
+  const rect = parafCanvas.getBoundingClientRect();
+  const scaleX = parafCanvas.width / rect.width;
+  const scaleY = parafCanvas.height / rect.height;
+  const clientX = e.touches ? e.touches[0].clientX : e.clientX;
+  const clientY = e.touches ? e.touches[0].clientY : e.clientY;
+  return { x: (clientX - rect.left) * scaleX, y: (clientY - rect.top) * scaleY };
+}
+function startParaf(e) { if (!parafActive) return; isDrawingParaf = true; hasParaf = true; const p = getParafPos(e); parafCtx.beginPath(); parafCtx.moveTo(p.x, p.y); e.preventDefault(); }
+function moveParaf(e) { if (!parafActive || !isDrawingParaf) return; const p = getParafPos(e); parafCtx.lineTo(p.x, p.y); parafCtx.stroke(); e.preventDefault(); }
+function endParaf() { isDrawingParaf = false; }
+
+parafCanvas.addEventListener('mousedown', startParaf);
+parafCanvas.addEventListener('mousemove', moveParaf);
+parafCanvas.addEventListener('mouseup', endParaf);
+parafCanvas.addEventListener('mouseleave', endParaf);
+parafCanvas.addEventListener('touchstart', startParaf, { passive: false });
+parafCanvas.addEventListener('touchmove', moveParaf, { passive: false });
+parafCanvas.addEventListener('touchend', endParaf);
+
+function clearParafCanvas() {
+  parafCtx.clearRect(0, 0, parafCanvas.width, parafCanvas.height);
+  hasParaf = false;
+}
+document.getElementById('btnClearParaf').addEventListener('click', clearParafCanvas);
+
+// ---- TTD Petugas Pencatat TETAP (beda dari paraf bulanan, disimpan sekali per perusahaan) ----
+const ttdCanvas = document.getElementById('ttdCanvas');
+const ttdCtx = ttdCanvas.getContext('2d');
+const ttdOverlay = document.getElementById('ttdOverlay');
+ttdCtx.lineWidth = 2.5;
+ttdCtx.lineCap = 'round';
+ttdCtx.strokeStyle = '#000';
+let isDrawingTtd = false;
+let hasTtd = false;
+let ttdActive = false;
+
+function unlockTtd() {
+  ttdActive = true;
+  ttdOverlay.style.display = 'none';
+  ttdCanvas.style.touchAction = 'none';
+  ttdCanvas.style.borderColor = '#1a73e8';
+}
+function lockTtd() {
+  ttdActive = false;
+  ttdOverlay.style.display = 'flex';
+  ttdCanvas.style.touchAction = 'pan-y';
+  ttdCanvas.style.borderColor = '#999';
+}
+document.getElementById('btnAktifkanTtd').addEventListener('click', unlockTtd);
+
+function getTtdPos(e) {
+  const rect = ttdCanvas.getBoundingClientRect();
+  const scaleX = ttdCanvas.width / rect.width;
+  const scaleY = ttdCanvas.height / rect.height;
+  const clientX = e.touches ? e.touches[0].clientX : e.clientX;
+  const clientY = e.touches ? e.touches[0].clientY : e.clientY;
+  return { x: (clientX - rect.left) * scaleX, y: (clientY - rect.top) * scaleY };
+}
+function startTtd(e) { if (!ttdActive) return; isDrawingTtd = true; hasTtd = true; const p = getTtdPos(e); ttdCtx.beginPath(); ttdCtx.moveTo(p.x, p.y); e.preventDefault(); }
+function moveTtd(e) { if (!ttdActive || !isDrawingTtd) return; const p = getTtdPos(e); ttdCtx.lineTo(p.x, p.y); ttdCtx.stroke(); e.preventDefault(); }
+function endTtd() { isDrawingTtd = false; }
+
+ttdCanvas.addEventListener('mousedown', startTtd);
+ttdCanvas.addEventListener('mousemove', moveTtd);
+ttdCanvas.addEventListener('mouseup', endTtd);
+ttdCanvas.addEventListener('mouseleave', endTtd);
+ttdCanvas.addEventListener('touchstart', startTtd, { passive: false });
+ttdCanvas.addEventListener('touchmove', moveTtd, { passive: false });
+ttdCanvas.addEventListener('touchend', endTtd);
+
+function clearTtdCanvas() {
+  ttdCtx.clearRect(0, 0, ttdCanvas.width, ttdCanvas.height);
+  hasTtd = false;
+}
+document.getElementById('btnClearTtd').addEventListener('click', clearTtdCanvas);
+
+document.getElementById('btnSimpanTtd').addEventListener('click', function () {
+  if (!hasTtd) { setStatus('Gambar TTD dulu sebelum disimpan.'); return; }
+  const payload = {
+    action: 'saveOfficialSignature',
+    nama: currentNama,
+    image: ttdCanvas.toDataURL('image/png').split(',')[1]
+  };
+  setStatus('Menyimpan TTD tetap...');
+  fetch(ACTIVE_WEB_APP_URL, { method: 'POST', body: JSON.stringify(payload) })
+    .then(res => res.json())
+    .then(data => {
+      if (data.success) {
+        setStatus('✅ TTD tetap tersimpan.');
+        clearTtdCanvas();
+        lockTtd();
+        loadCompanyDetail(currentNama);
+      } else setStatus('Gagal: ' + data.error);
+    })
+    .catch(err => setStatus('Error: ' + err.message));
+});
+
+document.getElementById('btnSimpanBulan').addEventListener('click', function () {
+  const payload = {
+    action: 'saveMonthEntry',
+    nama: currentNama,
+    bulan: document.getElementById('input_bulan').value,
+    wmAkhir: document.getElementById('input_wmAkhir').value,
+    keterangan: document.getElementById('input_keterangan').value,
+    image: base64Image,
+    parafImage: hasParaf ? parafCanvas.toDataURL('image/png').split(',')[1] : ''
+  };
+  if (!payload.wmAkhir) { setStatus('Isi WM Akhir dulu.'); return; }
+  setStatus('Menyimpan data bulan ini...');
+  fetch(ACTIVE_WEB_APP_URL, { method: 'POST', body: JSON.stringify(payload) })
+    .then(res => res.json())
+    .then(data => {
+      if (data.success) {
+        setStatus('✅ Data bulan ' + payload.bulan + ' tersimpan.');
+        document.getElementById('input_wmAkhir').value = '';
+        document.getElementById('input_keterangan').value = '';
+        document.getElementById('preview').style.display = 'none';
+        base64Image = '';
+        clearParafCanvas();
+        lockParaf();
+        loadCompanyDetail(currentNama);
+      } else setStatus('Gagal: ' + data.error);
+    })
+    .catch(err => setStatus('Error: ' + err.message));
+});
+
+function refreshDropdown(selectValue) {
+  fetch(ACTIVE_WEB_APP_URL + '?action=getCompanies')
+    .then(res => res.json())
+    .then(data => {
+      allCompanies = data.success ? data.data : [];
+      buildKapanewonFilter();
+      buildNamaOptions();
+      if (selectValue) {
+        const select = document.getElementById('lokasi');
+        select.value = selectValue;
+        select.dispatchEvent(new Event('change'));
+      }
+    });
+}
+
+function escapeHtml(str) {
+  return String(str).replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+}
+</script>
+
+</body>
+</html>
