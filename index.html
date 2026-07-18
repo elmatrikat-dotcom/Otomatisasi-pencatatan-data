@@ -165,6 +165,17 @@
   <div id="pdfLinkArea"></div>
 
   <div id="editIdentitasForm" class="hidden"></div>
+
+  <h3>TTD Petugas Pencatat Tetap</h3>
+  <div id="ttdInfo" style="font-size:13px; margin-bottom:6px;"></div>
+  <div style="position:relative; max-width:320px;">
+    <canvas id="ttdCanvas" width="320" height="130" style="border:1px solid #999; touch-action:pan-y; width:100%; max-width:320px; background:#fff; border-radius:6px; display:block;"></canvas>
+    <div id="ttdOverlay" style="position:absolute; inset:0; background:rgba(240,240,240,0.9); border-radius:6px; display:flex; align-items:center; justify-content:center; text-align:center; padding:8px;">
+      <button type="button" class="btn-primary" id="btnAktifkanTtd" style="margin:0;">🔓 Aktifkan untuk Gambar TTD</button>
+    </div>
+  </div>
+  <button type="button" class="btn-primary aksi-btn" id="btnClearTtd">🧹 Bersihkan</button>
+  <button type="button" class="btn-success aksi-btn" id="btnSimpanTtd">💾 Simpan TTD Tetap</button>
 </div>
 
 <!-- ==================== TABEL 12 BULAN (gaya kertas MATRIKS) ==================== -->
@@ -233,7 +244,7 @@ const IDENTITY_LABELS = {
   debitMasyarakatBulanan: 'Debit Izin Masyarakat Bulanan (m³/bulan)',
   jenisSumur: 'Jenis Sumur', meteran: 'Meteran', statusIzin: 'Status Izin',
   kategoriIzin: 'Kategori Izin', statusBangunSumur: 'Status Bangun Sumur', keteranganSumur: 'Keterangan Sumur',
-  kapanewon: 'Kapanewon/Kemantren'
+  kapanewon: 'Kapanewon/Kemantren', namaPetugas: 'Nama Petugas Pencatat', nipPetugas: 'NIP Petugas Pencatat'
 };
 
 let base64Image = '';
@@ -347,6 +358,14 @@ function loadCompanyDetail(nama) {
       document.getElementById('formBulanIni').classList.remove('hidden');
       if (typeof clearParafCanvas === 'function') clearParafCanvas();
       if (typeof lockParaf === 'function') lockParaf();
+      if (typeof clearTtdCanvas === 'function') clearTtdCanvas();
+      if (typeof lockTtd === 'function') lockTtd();
+      const ttdInfo = document.getElementById('ttdInfo');
+      if (ttdInfo) {
+        ttdInfo.innerHTML = data.data.identity.ttdPetugas
+          ? `✅ TTD tersimpan — <a href="${data.data.identity.ttdPetugas}" target="_blank">Lihat</a>`
+          : 'Belum ada TTD tersimpan untuk perusahaan ini.';
+      }
       setStatus('');
     })
     .catch(err => setStatus('Error: ' + err.message));
@@ -583,6 +602,78 @@ function clearParafCanvas() {
   hasParaf = false;
 }
 document.getElementById('btnClearParaf').addEventListener('click', clearParafCanvas);
+
+// ---- TTD Petugas Pencatat TETAP (beda dari paraf bulanan, disimpan sekali per perusahaan) ----
+const ttdCanvas = document.getElementById('ttdCanvas');
+const ttdCtx = ttdCanvas.getContext('2d');
+const ttdOverlay = document.getElementById('ttdOverlay');
+ttdCtx.lineWidth = 2.5;
+ttdCtx.lineCap = 'round';
+ttdCtx.strokeStyle = '#000';
+let isDrawingTtd = false;
+let hasTtd = false;
+let ttdActive = false;
+
+function unlockTtd() {
+  ttdActive = true;
+  ttdOverlay.style.display = 'none';
+  ttdCanvas.style.touchAction = 'none';
+  ttdCanvas.style.borderColor = '#1a73e8';
+}
+function lockTtd() {
+  ttdActive = false;
+  ttdOverlay.style.display = 'flex';
+  ttdCanvas.style.touchAction = 'pan-y';
+  ttdCanvas.style.borderColor = '#999';
+}
+document.getElementById('btnAktifkanTtd').addEventListener('click', unlockTtd);
+
+function getTtdPos(e) {
+  const rect = ttdCanvas.getBoundingClientRect();
+  const scaleX = ttdCanvas.width / rect.width;
+  const scaleY = ttdCanvas.height / rect.height;
+  const clientX = e.touches ? e.touches[0].clientX : e.clientX;
+  const clientY = e.touches ? e.touches[0].clientY : e.clientY;
+  return { x: (clientX - rect.left) * scaleX, y: (clientY - rect.top) * scaleY };
+}
+function startTtd(e) { if (!ttdActive) return; isDrawingTtd = true; hasTtd = true; const p = getTtdPos(e); ttdCtx.beginPath(); ttdCtx.moveTo(p.x, p.y); e.preventDefault(); }
+function moveTtd(e) { if (!ttdActive || !isDrawingTtd) return; const p = getTtdPos(e); ttdCtx.lineTo(p.x, p.y); ttdCtx.stroke(); e.preventDefault(); }
+function endTtd() { isDrawingTtd = false; }
+
+ttdCanvas.addEventListener('mousedown', startTtd);
+ttdCanvas.addEventListener('mousemove', moveTtd);
+ttdCanvas.addEventListener('mouseup', endTtd);
+ttdCanvas.addEventListener('mouseleave', endTtd);
+ttdCanvas.addEventListener('touchstart', startTtd, { passive: false });
+ttdCanvas.addEventListener('touchmove', moveTtd, { passive: false });
+ttdCanvas.addEventListener('touchend', endTtd);
+
+function clearTtdCanvas() {
+  ttdCtx.clearRect(0, 0, ttdCanvas.width, ttdCanvas.height);
+  hasTtd = false;
+}
+document.getElementById('btnClearTtd').addEventListener('click', clearTtdCanvas);
+
+document.getElementById('btnSimpanTtd').addEventListener('click', function () {
+  if (!hasTtd) { setStatus('Gambar TTD dulu sebelum disimpan.'); return; }
+  const payload = {
+    action: 'saveOfficialSignature',
+    nama: currentNama,
+    image: ttdCanvas.toDataURL('image/png').split(',')[1]
+  };
+  setStatus('Menyimpan TTD tetap...');
+  fetch(ACTIVE_WEB_APP_URL, { method: 'POST', body: JSON.stringify(payload) })
+    .then(res => res.json())
+    .then(data => {
+      if (data.success) {
+        setStatus('✅ TTD tetap tersimpan.');
+        clearTtdCanvas();
+        lockTtd();
+        loadCompanyDetail(currentNama);
+      } else setStatus('Gagal: ' + data.error);
+    })
+    .catch(err => setStatus('Error: ' + err.message));
+});
 
 document.getElementById('btnSimpanBulan').addEventListener('click', function () {
   const payload = {
