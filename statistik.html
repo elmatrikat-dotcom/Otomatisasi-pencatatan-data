@@ -1,0 +1,85 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Statistik Volume Air Tanah</title>
+<style>
+  body { font-family: sans-serif; max-width: 720px; margin: 0 auto; padding: 16px; background:#f5f5f5; }
+  h2 { text-align:center; }
+  .card { background:#fff; border:1px solid #ddd; border-radius:8px; padding:16px; margin-top:16px; }
+  .grid { display:grid; grid-template-columns: 1fr 1fr; gap:12px; margin-top:8px; }
+  .stat-box { background:#eef1f6; border-radius:8px; padding:14px; text-align:center; }
+  .stat-box .angka { font-size:26px; font-weight:700; color:#1a73e8; }
+  .stat-box .label { font-size:12px; color:#555; margin-top:4px; }
+  table { width:100%; border-collapse:collapse; margin-top:8px; font-size:14px; }
+  th, td { border:1px solid #ddd; padding:8px; text-align:left; }
+  th { background:#f0f0f0; }
+  #status { text-align:center; color:#555; margin-top:20px; }
+  a.back-link { display:inline-block; margin-bottom:10px; font-size:14px; }
+</style>
+</head>
+<body>
+
+<a class="back-link" href="index.html">← Kembali ke Form Input</a>
+<h2>📊 Statistik Volume Air Tanah</h2>
+
+<div id="status">Memuat data...</div>
+
+<div id="konten" style="display:none;">
+  <div class="card">
+    <h3>Ringkasan Umum</h3>
+    <div class="grid">
+      <div class="stat-box"><div class="angka" id="stat_total">-</div><div class="label">Total Titik/Perusahaan</div></div>
+      <div class="stat-box"><div class="angka" id="stat_wm">-</div><div class="label">Pakai Watermeter (WM)</div></div>
+      <div class="stat-box"><div class="angka" id="stat_nonwm">-</div><div class="label">Non Watermeter</div></div>
+      <div class="stat-box"><div class="angka" id="stat_izin">-</div><div class="label">Sudah Berizin</div></div>
+      <div class="stat-box"><div class="angka" id="stat_nonizin">-</div><div class="label">Belum/Non Izin</div></div>
+      <div class="stat-box"><div class="angka" id="stat_bor">-</div><div class="label">Sumur Bor</div></div>
+    </div>
+  </div>
+
+  <div class="card">
+    <h3>Jumlah Titik per Kapanewon/Kemantren</h3>
+    <table>
+      <thead><tr><th>Kapanewon</th><th>Jumlah Titik</th></tr></thead>
+      <tbody id="tabelKapanewon"></tbody>
+    </table>
+  </div>
+</div>
+
+<script>
+// Samakan URL ini dengan yang dipakai di index.html (deployment kabupaten yang sama)
+const WEB_APP_URL = 'https://script.google.com/macros/s/AKfycbwilCg4J3qe__qit8s9oj2bU1fqe8Wal3DGfMVzQJlUwyGLtVI6MXpQV4ivkinuRxbdOg/exec';
+
+fetch(WEB_APP_URL + '?action=getStatistik')
+  .then(res => res.json())
+  .then(res => {
+    if (!res.success || !res.data) {
+      document.getElementById('status').innerText = 'Gagal memuat statistik: ' + (res.error || 'data kosong');
+      return;
+    }
+    const d = res.data;
+    document.getElementById('stat_total').innerText = d.totalTitik;
+    document.getElementById('stat_wm').innerText = d.pakaiWM;
+    document.getElementById('stat_nonwm').innerText = d.nonWM;
+    document.getElementById('stat_izin').innerText = d.izinAda;
+    document.getElementById('stat_nonizin').innerText = d.izinTidak;
+    document.getElementById('stat_bor').innerText = d.sumurBor;
+
+    const tbody = document.getElementById('tabelKapanewon');
+    const entries = Object.entries(d.perKapanewon).sort((a, b) => b[1] - a[1]);
+    tbody.innerHTML = entries.map(([kap, jumlah]) =>
+      `<tr><td>${kap}</td><td>${jumlah}</td></tr>`
+    ).join('');
+
+    document.getElementById('status').style.display = 'none';
+    document.getElementById('konten').style.display = 'block';
+  })
+  .catch(err => {
+    document.getElementById('status').innerText = 'Error: ' + err.message;
+  });
+</script>
+
+</body>
+</html>
