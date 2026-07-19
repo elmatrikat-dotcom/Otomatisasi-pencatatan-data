@@ -767,12 +767,12 @@ function tampilkanAppSetelahLogin(userInfo) {
 
   loadCompanyList(); // muat daftar perusahaan, nanti otomatis difilter ke NIP + kapanewon petugas
 
-  // Kunci dropdown Kapanewon ke kapanewon petugas ini (soft-lock, bukan proteksi keras)
+  // Set default dropdown Kapanewon ke kapanewon petugas ini, tapi TETAP bisa diganti manual
+  // (filter utama tetap berdasarkan NIP, jadi mengganti kapanewon di sini aman)
   const kapanewonSel = document.getElementById('kapanewonFilter');
   setTimeout(() => {
     if (userInfo.kapanewon) {
       kapanewonSel.value = userInfo.kapanewon;
-      kapanewonSel.disabled = true;
       buildNamaOptions();
     }
   }, 800); // beri waktu buildKapanewonFilter() selesai isi opsi dulu
