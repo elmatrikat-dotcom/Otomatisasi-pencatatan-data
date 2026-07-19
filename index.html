@@ -45,9 +45,34 @@
   .month-table th { background:#dbe5f5; text-transform:uppercase; font-size:11px; }
   .month-table .row-label { background:#eef1f6; font-weight:700; text-align:left; text-transform:uppercase; font-size:11px; width:120px; }
   .month-table td.keterangan-cell { font-size:11px; text-align:left; }
+<style>
+  #layarLogin { max-width:340px; margin:60px auto; text-align:center; }
+  #layarLogin .card { text-align:left; }
+  #infoLogin { display:flex; justify-content:space-between; align-items:center; background:#eef1f6; padding:8px 12px; border-radius:6px; font-size:13px; margin-bottom:10px; }
+  #infoLogin button { margin:0; padding:5px 10px; font-size:12px; }
+  #appUtama { display:none; }
 </style>
 </head>
 <body>
+
+<!-- ==================== LAYAR LOGIN ==================== -->
+<div id="layarLogin">
+  <h2>🔐 Login Petugas Pencatat</h2>
+  <div class="card">
+    <label>NIP</label>
+    <input type="text" id="login_nip" placeholder="Masukkan NIP Anda">
+    <button class="btn-primary btn-block" id="btnLogin">Masuk</button>
+    <div id="loginStatus" style="margin-top:8px; font-size:13px; color:#d93025;"></div>
+  </div>
+</div>
+
+<!-- ==================== APLIKASI UTAMA (muncul setelah login) ==================== -->
+<div id="appUtama">
+
+<div id="infoLogin">
+  <span>👤 <strong id="infoNamaPetugas"></strong> — Kapanewon: <strong id="infoKapanewonPetugas"></strong></span>
+  <button class="btn-danger" id="btnLogout">Keluar</button>
+</div>
 
 <h2>📋 Kartu Pencatatan Volume Air Tanah</h2>
 
@@ -219,6 +244,8 @@
   <button class="btn-success btn-block" id="btnSimpanBulan">✅ Simpan Bacaan Bulan Ini</button>
 </div>
 
+</div><!-- tutup #appUtama -->
+
 <script>
 // Konfigurasi per kabupaten/kota DIY. Setiap kabupaten = 1 spreadsheet + 1 Web App URL terpisah.
 // "active: false" berarti belum ada datanya -> muncul di dropdown tapi disabled (nonaktif).
@@ -329,9 +356,8 @@ function buildNamaOptions() {
 document.getElementById('kapanewonFilter').addEventListener('change', buildNamaOptions);
 document.getElementById('searchNama').addEventListener('input', buildNamaOptions);
 
-window.addEventListener('DOMContentLoaded', function () {
-  loadCompanyList();
-});
+// Catatan: loadCompanyList() TIDAK dipanggil otomatis di sini lagi.
+// Sekarang dipanggil dari tampilkanAppSetelahLogin() setelah login berhasil.
 
 document.getElementById('lokasi').addEventListener('change', function () {
   const val = this.value;
@@ -728,6 +754,60 @@ function refreshDropdown(selectValue) {
 function escapeHtml(str) {
   return String(str).replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
 }
+
+// ==================== LOGIN / LOGOUT ====================
+function tampilkanAppSetelahLogin(userInfo) {
+  document.getElementById('layarLogin').style.display = 'none';
+  document.getElementById('appUtama').style.display = 'block';
+  document.getElementById('infoNamaPetugas').innerText = userInfo.nama || '-';
+  document.getElementById('infoKapanewonPetugas').innerText = userInfo.kapanewon || '-';
+
+  loadCompanyList(); // muat daftar perusahaan, nanti otomatis difilter ke kapanewon petugas
+
+  // Kunci dropdown Kapanewon ke kapanewon petugas ini (soft-lock, bukan proteksi keras)
+  const kapanewonSel = document.getElementById('kapanewonFilter');
+  setTimeout(() => {
+    if (userInfo.kapanewon) {
+      kapanewonSel.value = userInfo.kapanewon;
+      kapanewonSel.disabled = true;
+      buildNamaOptions();
+    }
+  }, 800); // beri waktu buildKapanewonFilter() selesai isi opsi dulu
+}
+
+document.getElementById('btnLogin').addEventListener('click', function () {
+  const nip = document.getElementById('login_nip').value.trim();
+  if (!nip) { document.getElementById('loginStatus').innerText = 'Isi NIP dulu.'; return; }
+  document.getElementById('loginStatus').innerText = 'Memeriksa NIP...';
+  fetch(ACTIVE_WEB_APP_URL, { method: 'POST', body: JSON.stringify({ action: 'login', nip: nip }) })
+    .then(res => res.json())
+    .then(res => {
+      if (res.success) {
+        sessionStorage.setItem('petugasLogin', JSON.stringify(res.data));
+        document.getElementById('loginStatus').innerText = '';
+        tampilkanAppSetelahLogin(res.data);
+      } else {
+        document.getElementById('loginStatus').innerText = res.error || 'NIP tidak ditemukan.';
+      }
+    })
+    .catch(err => { document.getElementById('loginStatus').innerText = 'Error: ' + err.message; });
+});
+
+document.getElementById('btnLogout').addEventListener('click', function () {
+  sessionStorage.removeItem('petugasLogin');
+  location.reload();
+});
+
+// Cek kalau sudah login sebelumnya (session masih tersimpan di browser ini)
+(function cekSessionLogin() {
+  const saved = sessionStorage.getItem('petugasLogin');
+  if (saved) {
+    try {
+      const userInfo = JSON.parse(saved);
+      tampilkanAppSetelahLogin(userInfo);
+    } catch (e) { /* sesi rusak, biarkan minta login ulang */ }
+  }
+})();
 </script>
 
 </body>
