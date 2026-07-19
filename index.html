@@ -334,7 +334,8 @@ function loadCompanyList() {
 
 function buildKapanewonFilter() {
   const sel = document.getElementById('kapanewonFilter');
-  const unique = [...new Set(allCompanies.map(c => c.kapanewon).filter(k => k))].sort();
+  const sumber = loggedInNip ? allCompanies.filter(c => c.nipPetugas === loggedInNip) : allCompanies;
+  const unique = [...new Set(sumber.map(c => c.kapanewon).filter(k => k))].sort();
   sel.innerHTML = '<option value="">-- Semua Kapanewon --</option>' +
     unique.map(k => `<option value="${escapeHtml(k)}">${escapeHtml(k)}</option>`).join('');
 }
