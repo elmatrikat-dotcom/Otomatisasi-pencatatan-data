@@ -175,7 +175,11 @@
   <textarea id="new_keteranganSumur" rows="2"></textarea>
 
   <label>Kapanewon/Kemantren</label>
-  <input type="text" id="new_kapanewon" placeholder="cth: Banguntapan">
+  <select id="new_kapanewon_select">
+    <option value="">-- Pilih Kapanewon --</option>
+    <option value="__LAINNYA__">➕ Lainnya (ketik manual)</option>
+  </select>
+  <input type="text" id="new_kapanewon" placeholder="Ketik nama Kapanewon baru" class="hidden" style="margin-top:6px;">
 
   <label>Nama Petugas Pencatat</label>
   <input type="text" id="new_namaPetugas" placeholder="cth: Budi Santoso">
@@ -264,6 +268,7 @@ const KABUPATEN_CONFIG = {
 let ACTIVE_WEB_APP_URL = KABUPATEN_CONFIG.bantul.url;
 let allCompanies = []; // [{nama, kapanewon, nipPetugas}] hasil getCompanies dari kabupaten yang aktif
 let loggedInNip = ''; // NIP petugas yang sedang login, dipakai buat filter perusahaan miliknya
+let loggedInNama = ''; // Nama petugas yang sedang login, buat auto-isi form tambah perusahaan baru
 
 const MONTHS = ['Januari','Februari','Maret','April','Mei','Juni','Juli','Agustus','September','Oktober','November','Desember'];
 
@@ -372,11 +377,39 @@ document.getElementById('lokasi').addEventListener('change', function () {
 
   if (val === '__NEW__') {
     document.getElementById('formBaru').classList.remove('hidden');
+    siapkanFormPerusahaanBaru();
     return;
   }
   if (val) {
     currentNama = val;
     loadCompanyDetail(val);
+  }
+});
+
+// Isi dropdown Kapanewon (dari data yang sudah ada) + auto-isi Nama/NIP petugas dari yang login
+function siapkanFormPerusahaanBaru() {
+  const kapSelect = document.getElementById('new_kapanewon_select');
+  const unique = [...new Set(allCompanies.map(c => c.kapanewon).filter(k => k))].sort();
+  kapSelect.innerHTML = '<option value="">-- Pilih Kapanewon --</option>' +
+    unique.map(k => `<option value="${escapeHtml(k)}">${escapeHtml(k)}</option>`).join('') +
+    '<option value="__LAINNYA__">➕ Lainnya (ketik manual)</option>';
+
+  document.getElementById('new_kapanewon').value = '';
+  document.getElementById('new_kapanewon').classList.add('hidden');
+
+  document.getElementById('new_namaPetugas').value = loggedInNama;
+  document.getElementById('new_nipPetugas').value = loggedInNip;
+}
+
+document.getElementById('new_kapanewon_select').addEventListener('change', function () {
+  const manualInput = document.getElementById('new_kapanewon');
+  if (this.value === '__LAINNYA__') {
+    manualInput.classList.remove('hidden');
+    manualInput.value = '';
+    manualInput.focus();
+  } else {
+    manualInput.classList.add('hidden');
+    manualInput.value = this.value;
   }
 });
 
@@ -765,6 +798,7 @@ function tampilkanAppSetelahLogin(userInfo) {
   document.getElementById('infoNamaPetugas').innerText = userInfo.nama || '-';
   document.getElementById('infoKapanewonPetugas').innerText = userInfo.kapanewon || '-';
   loggedInNip = userInfo.nip || '';
+  loggedInNama = userInfo.nama || '';
 
   loadCompanyList(); // muat daftar perusahaan, nanti otomatis difilter ke NIP + kapanewon petugas
 
