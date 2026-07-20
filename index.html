@@ -70,7 +70,7 @@
 <div id="appUtama">
 
 <div id="infoLogin">
-  <span>👤 <strong id="infoNamaPetugas"></strong> — Kapanewon: <strong id="infoKapanewonPetugas"></strong></span>
+  <span>👤 <strong id="infoNamaPetugas"></strong></span>
   <button class="btn-danger" id="btnLogout">Keluar</button>
 </div>
 
@@ -309,9 +309,16 @@ function setStatus(msg) { document.getElementById('status').innerText = msg; }
   sel.value = 'bantul';
 })();
 
+let kabupatenSebelumnya = 'bantul';
+
 document.getElementById('kabupatenSelect').addEventListener('change', function () {
   const cfg = KABUPATEN_CONFIG[this.value];
-  if (!cfg || !cfg.active) { setStatus('Data kabupaten ini belum tersedia.'); return; }
+  if (!cfg || !cfg.active) {
+    setStatus('Data kabupaten ini belum tersedia.');
+    this.value = kabupatenSebelumnya;
+    return;
+  }
+  kabupatenSebelumnya = this.value;
   ACTIVE_WEB_APP_URL = cfg.url;
   resetToCompanyList();
 });
@@ -796,7 +803,6 @@ function tampilkanAppSetelahLogin(userInfo) {
   document.getElementById('layarLogin').style.display = 'none';
   document.getElementById('appUtama').style.display = 'block';
   document.getElementById('infoNamaPetugas').innerText = userInfo.nama || '-';
-  document.getElementById('infoKapanewonPetugas').innerText = userInfo.kapanewon || '-';
   loggedInNip = userInfo.nip || '';
   loggedInNama = userInfo.nama || '';
 
