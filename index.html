@@ -773,10 +773,15 @@ document.getElementById('btnSimpanBulan').addEventListener('click', function () 
         base64Image = '';
         clearParafCanvas();
         lockParaf();
-        loadCompanyDetail(currentNama);
-      } else setStatus('Gagal: ' + data.error);
+      } else {
+        setStatus('Gagal: ' + data.error);
+      }
+      loadCompanyDetail(currentNama); // selalu refresh, biar bisa dicek beneran masuk atau belum
     })
-    .catch(err => setStatus('Error: ' + err.message));
+    .catch(err => {
+      setStatus('⚠️ Koneksi terputus saat menyimpan. Memeriksa apakah data sudah masuk...');
+      loadCompanyDetail(currentNama); // cek data terbaru langsung dari spreadsheet
+    });
 });
 
 function refreshDropdown(selectValue) {
