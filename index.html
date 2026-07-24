@@ -288,6 +288,7 @@ const IDENTITY_LABELS = {
 
 let base64Image = '';
 let currentNama = '';
+let currentMonthlyData = []; // data 12 bulan perusahaan yang sedang dibuka, dipakai buat auto-isi keterangan
 
 function setStatus(msg) { document.getElementById('status').innerText = msg; }
 
@@ -296,6 +297,29 @@ function setStatus(msg) { document.getElementById('status').innerText = msg; }
   MONTHS.forEach(m => { const o = document.createElement('option'); o.value = m; o.textContent = m; sel.appendChild(o); });
   sel.value = MONTHS[new Date().getMonth()];
 })();
+
+document.getElementById('input_bulan').addEventListener('change', isiOtomatisKeterangan);
+
+// Kalau bulan yang dipilih belum ada keterangan sendiri, otomatis isi
+// dari keterangan bulan sebelumnya (tinggal dicek/diedit kalau beda)
+function isiOtomatisKeterangan() {
+  const bulanDipilih = document.getElementById('input_bulan').value;
+  const idx = MONTHS.indexOf(bulanDipilih);
+  if (idx === -1 || !currentMonthlyData || currentMonthlyData.length === 0) return;
+
+  const bulanIni = currentMonthlyData[idx];
+  const ketInput = document.getElementById('input_keterangan');
+
+  if (bulanIni && bulanIni.keterangan) {
+    // Bulan ini sudah punya keterangan sendiri -> tampilkan itu (mode edit)
+    ketInput.value = bulanIni.keterangan;
+  } else if (idx > 0 && currentMonthlyData[idx - 1] && currentMonthlyData[idx - 1].keterangan) {
+    // Belum ada keterangan bulan ini -> pinjam dari bulan sebelumnya sebagai default
+    ketInput.value = currentMonthlyData[idx - 1].keterangan;
+  } else {
+    ketInput.value = '';
+  }
+}
 
 // ---- Dropdown Kabupaten ----
 (function initKabupatenSelect() {
@@ -428,6 +452,8 @@ function loadCompanyDetail(nama) {
       if (!data.success) { setStatus('Gagal memuat: ' + data.error); return; }
       renderIdentitas(data.data.identity);
       renderHistori(data.data.monthly);
+      currentMonthlyData = data.data.monthly;
+      isiOtomatisKeterangan();
       document.getElementById('kartuIdentitas').classList.remove('hidden');
       document.getElementById('tabelBulanan').classList.remove('hidden');
       document.getElementById('formBulanIni').classList.remove('hidden');
