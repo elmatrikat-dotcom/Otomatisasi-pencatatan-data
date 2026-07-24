@@ -524,7 +524,7 @@ function renderHistori(monthly) {
 function hapusBulan(bulan) {
   if (!confirm('Yakin hapus data bulan ' + bulan + ' untuk ' + currentNama + '?')) return;
   setStatus('Menghapus...');
-  fetch(ACTIVE_WEB_APP_URL, { method: 'POST', body: JSON.stringify({ action: 'deleteMonthEntry', nama: currentNama, bulan: bulan }) })
+  fetch(ACTIVE_WEB_APP_URL, { method: 'POST', body: JSON.stringify({ action: 'deleteMonthEntry', nama: currentNama, bulan: bulan, nip: loggedInNip }) })
     .then(res => res.json())
     .then(data => {
       if (data.success) { setStatus('✅ Data bulan ' + bulan + ' dihapus.'); loadCompanyDetail(currentNama); }
@@ -545,7 +545,7 @@ document.getElementById('btnEditIdentitas').addEventListener('click', function (
       form.classList.remove('hidden');
 
       document.getElementById('btnSimpanEditIdentitas').addEventListener('click', function () {
-        const payload = { action: 'updateCompanyIdentity', namaLama: currentNama };
+        const payload = { action: 'updateCompanyIdentity', namaLama: currentNama, nip: loggedInNip };
         Object.keys(IDENTITY_LABELS).forEach(key => { payload[key] = document.getElementById('edit_' + key).value; });
         setStatus('Menyimpan identitas...');
         fetch(ACTIVE_WEB_APP_URL, { method: 'POST', body: JSON.stringify(payload) })
@@ -583,7 +583,7 @@ document.getElementById('btnExportPdf').addEventListener('click', function () {
 document.getElementById('btnHapusPerusahaan').addEventListener('click', function () {
   if (!confirm('Yakin HAPUS SELURUH DATA perusahaan "' + currentNama + '"? Tindakan ini tidak bisa dibatalkan.')) return;
   setStatus('Menghapus perusahaan...');
-  fetch(ACTIVE_WEB_APP_URL, { method: 'POST', body: JSON.stringify({ action: 'deleteCompany', nama: currentNama }) })
+  fetch(ACTIVE_WEB_APP_URL, { method: 'POST', body: JSON.stringify({ action: 'deleteCompany', nama: currentNama, nip: loggedInNip }) })
     .then(res => res.json())
     .then(data => {
       if (data.success) {
@@ -598,7 +598,7 @@ document.getElementById('btnHapusPerusahaan').addEventListener('click', function
 });
 
 document.getElementById('btnSimpanBaru').addEventListener('click', function () {
-  const payload = { action: 'createCompany' };
+  const payload = { action: 'createCompany', nip: loggedInNip };
   Object.keys(IDENTITY_LABELS).forEach(key => { payload[key] = document.getElementById('new_' + key).value; });
   if (!payload.nama) { setStatus('Nama perusahaan wajib diisi.'); return; }
   setStatus('Menyimpan perusahaan baru...');
@@ -734,6 +734,7 @@ document.getElementById('btnSimpanTtd').addEventListener('click', function () {
   const payload = {
     action: 'saveOfficialSignature',
     nama: currentNama,
+    nip: loggedInNip,
     image: ttdCanvas.toDataURL('image/png').split(',')[1]
   };
   setStatus('Menyimpan TTD tetap...');
@@ -754,6 +755,7 @@ document.getElementById('btnSimpanBulan').addEventListener('click', function () 
   const payload = {
     action: 'saveMonthEntry',
     nama: currentNama,
+    nip: loggedInNip,
     bulan: document.getElementById('input_bulan').value,
     wmAkhir: document.getElementById('input_wmAkhir').value,
     keterangan: document.getElementById('input_keterangan').value,
